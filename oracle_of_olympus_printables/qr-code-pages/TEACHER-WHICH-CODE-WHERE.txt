@@ -1,0 +1,21 @@
+Oracle of Olympus — passcode URLs for NFC tags (must match oracle_clues_final.html PASSWORDS)
+
+SETUP
+  • Upload the whole qr-code-pages folder to your website.
+  • Each qr-XXXX.html page shows one 4-digit code (big) for teams to type on the laptop.
+  • Program each NFC tag with the full HTTPS URL of the page you want (same URL shown in small text under the mini QR).
+  • Hide physical tags/cards at each location. Teams look for the tag that matches THEIR TEAM COLOUR, bring it to you, you scan on your phone → page opens → read or show them the code.
+
+SUGGESTED CODE / PAGE MAPPING (story order — laptop still accepts any of the five codes on any card)
+  7392  qr-7392.html  — first unlock (Clue I · Equipment Shed), e.g. from starting pack
+  5814  qr-5814.html  — after shed → Gazebo / Clue II
+  9260  qr-9260.html  — Table tennis / Clue III
+  3048  qr-3048.html  — Football goal / Clue IV
+  1675  qr-1675.html  — Storytelling chair / Clue V
+
+COLOUR vs CODE
+  • Easiest: at each site, one tag per team colour, all programmed with the SAME URL for that stop (e.g. all “blue” tags at the gazebo open qr-5814.html → everyone gets 5814). Card colour tells you which team found it.
+  • Or: different URL per team if you want different codes per team (then edit PASSWORDS and pages accordingly).
+
+CHANGING NUMBERS
+  Edit PASSWORDS in oracle_clues_final.html, data-oracle-code + digits in each qr-XXXX.html, and reprogram tags.

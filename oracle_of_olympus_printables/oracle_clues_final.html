@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Oracle of Olympus</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg1:#c5d8f0;
+  --bg2:#e8ecf4;
+  --bg3:#dde7f0;
+  --glass:rgba(255,255,255,0.52);
+  --glass-border:rgba(255,255,255,0.85);
+  --glass-shadow:0 8px 32px rgba(31,38,135,0.12);
+  --text:#1d1d1f;
+  --text2:#3a3a3c;
+  --muted:#636366;
+  --accent:#0a84ff;
+  --accent2:#0077ed;
+  --teal:#2ec4b6;
+  --success:#248a3d;
+  --err:#c41e3a;
+  --lock-dim:rgba(0,0,0,0.35);
+  --radius:22px;
+  --radius-sm:14px;
+  --gold:#b8860b;
+  --gold-l:#c9a227;
+  --ink:#1d1d1f;
+  --ink2:#3a3a3c;
+  --parch-d:#e8e0d0;
+  --blood:#c41e3a;
+}
+html{-webkit-text-size-adjust:100%}
+body{
+  min-height:100vh;
+  font-family:"DM Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  font-size:17px;
+  line-height:1.45;
+  color:var(--text);
+  padding:clamp(16px,4vw,28px);
+  padding-bottom:48px;
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%,rgba(255,255,255,0.9),transparent 50%),
+    linear-gradient(165deg,var(--bg1) 0%,var(--bg2) 45%,var(--bg3) 100%);
+  background-attachment:fixed;
+}
+
+.app{max-width:1100px;margin:0 auto}
+
+/* ── Hero ── */
+.hero{
+  text-align:center;
+  margin-bottom:28px;
+  padding:28px 22px;
+  border-radius:var(--radius);
+  background:var(--glass);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--glass-border);
+  box-shadow:var(--glass-shadow);
+}
+.hero-eyebrow{
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:10px;
+}
+.hero h1{
+  font-size:clamp(26px,5vw,34px);
+  font-weight:700;
+  letter-spacing:-0.02em;
+  color:var(--text);
+  margin-bottom:8px;
+}
+.hero-lead{
+  font-size:16px;
+  color:var(--text2);
+  max-width:36em;
+  margin:0 auto 20px;
+}
+.steps{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:10px 16px;
+  font-size:14px;
+  color:var(--muted);
+}
+.steps span{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 14px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.65);
+  border:1px solid rgba(255,255,255,0.9);
+  font-weight:600;
+  color:var(--text2);
+}
+.steps span b{color:var(--accent);font-weight:700}
+
+/* ── Card grid: equal-width columns, every card the same height ── */
+.cards-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));
+  gap:16px;
+  align-items:stretch;
+}
+
+.card{
+  --card-h:clamp(480px,52vh,620px);
+  display:flex;
+  flex-direction:column;
+  height:var(--card-h);
+  min-height:var(--card-h);
+  max-height:var(--card-h);
+  border-radius:var(--radius);
+  overflow:hidden;
+  border:1px solid var(--glass-border);
+  background:var(--glass);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  box-shadow:var(--glass-shadow);
+  transition:transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+}
+.card.locked{filter:saturate(0.88) brightness(0.97)}
+.card.locked:hover{transform:translateY(-2px);box-shadow:0 12px 40px rgba(31,38,135,0.16)}
+.card.open{
+  filter:none;
+  box-shadow:0 16px 48px rgba(31,38,135,0.14);
+  height:auto;
+  min-height:200px;
+  max-height:none;
+}
+.card.open .card-head{cursor:pointer}
+.card.open .card-loc::after{
+  content:" · tap to open clue";
+  font-size:13px;
+  font-weight:600;
+  color:var(--accent);
+  display:block;
+  margin-top:6px;
+  letter-spacing:0;
+}
+
+.card-visual{
+  position:relative;
+  flex-shrink:0;
+  height:112px;
+  min-height:112px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:48px;
+  line-height:1;
+  background:linear-gradient(145deg,rgba(10,132,255,0.22),rgba(46,196,182,0.18));
+}
+.card:nth-child(2) .card-visual{background:linear-gradient(145deg,rgba(52,199,89,0.2),rgba(10,132,255,0.15))}
+.card:nth-child(3) .card-visual{background:linear-gradient(145deg,rgba(255,149,0,0.22),rgba(175,82,222,0.12))}
+.card:nth-child(4) .card-visual{background:linear-gradient(145deg,rgba(255,59,48,0.15),rgba(255,149,0,0.18))}
+.card:nth-child(5) .card-visual{background:linear-gradient(145deg,rgba(175,82,222,0.2),rgba(10,132,255,0.14))}
+.card.locked .card-visual::after{
+  content:"";
+  position:absolute;inset:0;
+  background:rgba(255,255,255,0.25);
+  pointer-events:none;
+}
+
+.card-head{
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:16px 16px 14px;
+  cursor:pointer;
+  user-select:none;
+  -webkit-user-select:none;
+}
+.card-head-main{flex:1;min-width:0}
+.card-num{
+  display:block;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+.card-loc{
+  display:block;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:-0.02em;
+  color:var(--text);
+}
+.card.locked .card-loc{color:#2c2c2e}
+.card-tag{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  padding:6px 10px;
+  border-radius:999px;
+  background:rgba(142,142,147,0.16);
+  color:var(--muted);
+}
+.card.open .card-tag{background:rgba(52,199,89,0.2);color:var(--success)}
+.card-chev{
+  width:36px;height:36px;
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(10,132,255,0.15);
+  color:var(--accent);
+  flex-shrink:0;
+  font-size:14px;
+  transition:transform 0.2s ease;
+}
+.card.locked .card-chev{background:rgba(142,142,147,0.2);color:var(--muted)}
+.card.card-pw-open .card-chev{transform:rotate(180deg)}
+
+.lock{width:28px;height:28px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:2px;flex-shrink:0}
+.lock-u{width:12px;height:7px;border:2.5px solid var(--muted);border-bottom:none;border-radius:6px 6px 0 0;transition:all 0.3s}
+.lock-b{width:16px;height:10px;background:var(--muted);border-radius:3px;display:flex;align-items:center;justify-content:center;transition:background 0.3s}
+.lock-h{width:4px;height:4px;border-radius:50%;background:#fff}
+.card.open .lock-u{border-color:var(--success);transform:rotate(-25deg) translate(5px,-1px)}
+.card.open .lock-b{background:var(--success)}
+
+/* Password row */
+.pw-wrap{flex-shrink:0;padding:0 16px 16px;display:none;flex-direction:column;gap:8px}
+.pw-row{display:flex;gap:10px;flex-wrap:wrap}
+.pw-inp{
+  flex:1;
+  min-width:160px;
+  min-height:48px;
+  padding:12px 16px;
+  font-size:17px;
+  font-weight:600;
+  letter-spacing:0.12em;
+  font-variant-numeric:tabular-nums;
+  border-radius:var(--radius-sm);
+  border:2px solid rgba(142,142,147,0.35);
+  background:rgba(255,255,255,0.85);
+  color:var(--text);
+  outline:none;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+.pw-inp:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(10,132,255,0.2)}
+.pw-inp::placeholder{color:#aeaeb2;font-weight:500;letter-spacing:0.02em;text-transform:none}
+.pw-btn{
+  min-height:48px;
+  padding:0 22px;
+  font-size:16px;
+  font-weight:700;
+  border:none;
+  border-radius:var(--radius-sm);
+  background:linear-gradient(180deg,var(--accent),var(--accent2));
+  color:#fff;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(10,132,255,0.35);
+  transition:transform 0.15s, filter 0.15s;
+}
+.pw-btn:active{transform:scale(0.98)}
+.pw-err{color:var(--err);font-size:14px;font-weight:600;min-height:20px;padding-left:4px}
+
+/* Clue panels sit in card DOM but stay hidden until opened in the modal */
+.clue-content{
+  flex-direction:column;
+  padding:0;
+  overflow:visible;
+}
+.card .clue-content{display:none}
+.clue-title-bar{
+  background:linear-gradient(180deg,rgba(29,29,31,0.94),rgba(44,44,46,0.92));
+  margin:0 -16px 16px;
+  padding:16px 18px;
+  border-radius:0 0 var(--radius-sm) var(--radius-sm);
+}
+.clue-label{font-size:10px;font-weight:700;letter-spacing:0.2em;color:rgba(255,255,255,0.55);display:block;margin-bottom:6px}
+.clue-name{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.02em}
+.clue-title-bar--nested{margin-top:8px;margin-bottom:14px!important}
+.clue-modal-body .clue-title-bar--nested{margin-left:0;margin-right:0}
+
+.story-box{font-size:16px;line-height:1.65;color:var(--ink2);margin-bottom:14px}
+.task-box{
+  background:rgba(10,132,255,0.08);
+  border-left:4px solid var(--accent);
+  padding:12px 14px;
+  font-style:italic;
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.55;
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0;
+  margin-bottom:14px;
+}
+.task-box strong{font-style:normal;font-weight:700}
+.data-box{
+  background:rgba(52,199,89,0.12);
+  border:1px solid rgba(52,199,89,0.45);
+  border-radius:var(--radius-sm);
+  padding:12px 14px;
+  margin-bottom:14px;
+}
+.data-title{font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--success);margin-bottom:8px;display:block;text-transform:uppercase}
+.data-row{font-size:15px;color:var(--ink);line-height:1.75}
+.data-row span{font-weight:700}
+.next-box{
+  background:linear-gradient(180deg,#2c2c2e,#1d1d1f);
+  border-radius:var(--radius-sm);
+  padding:14px 16px;
+  margin-bottom:6px;
+}
+.next-label{font-size:10px;font-weight:700;letter-spacing:0.18em;color:rgba(255,255,255,0.45);display:block;margin-bottom:6px;text-transform:uppercase}
+.next-text{font-size:15px;color:#f5f5f7;line-height:1.5}
+.next-code{font-size:15px;font-weight:600;color:var(--gold-l);letter-spacing:0.02em;margin-top:8px;display:block;line-height:1.5}
+.next-code strong{color:#fff;font-weight:700}
+
+.cipher-wrap{margin-bottom:14px}
+.cipher-title{font-size:12px;font-weight:700;letter-spacing:0.08em;color:var(--muted);margin-bottom:10px;display:block;text-transform:uppercase}
+.cipher-grid{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+/* Light tile so dark emoji (e.g. ◈ ☽) stay visible — was var(--ink) which hid them */
+.sym{
+  width:44px;height:44px;
+  background:linear-gradient(180deg,#f7f9fc,#eef2f8);
+  border:2px solid rgba(10,132,255,0.35);
+  border-radius:10px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.9),0 1px 2px rgba(0,0,0,0.06);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;
+  line-height:1;
+  font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",system-ui,sans-serif;
+}
+.cipher-key{
+  display:grid;
+  grid-template-columns:repeat(6,minmax(0,1fr));
+  gap:8px;
+  margin-bottom:14px;
+}
+@media (min-width:520px){
+  .cipher-key{grid-template-columns:repeat(8,minmax(0,1fr))}
+}
+.key-item{
+  background:rgba(10,132,255,0.08);
+  border:1px solid rgba(10,132,255,0.2);
+  border-radius:8px;
+  padding:6px 4px;
+  text-align:center;
+}
+.key-sym{
+  font-size:18px;
+  display:block;
+  line-height:1.15;
+  font-family:"Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",system-ui,sans-serif;
+}
+.key-let{font-size:10px;font-weight:700;color:var(--muted);display:block;margin-top:4px}
+.cipher-inp{
+  width:100%;
+  min-height:48px;
+  padding:12px 14px;
+  font-size:18px;
+  font-weight:700;
+  letter-spacing:0.12em;
+  border-radius:var(--radius-sm);
+  border:2px solid rgba(142,142,147,0.35);
+  background:rgba(255,255,255,0.9);
+  outline:none;
+  text-transform:uppercase;
+  margin-bottom:8px;
+}
+.cipher-inp:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(10,132,255,0.2)}
+.cipher-btn{
+  min-height:48px;
+  padding:0 20px;
+  font-size:15px;
+  font-weight:700;
+  border-radius:var(--radius-sm);
+  border:none;
+  background:var(--text);
+  color:#fff;
+  cursor:pointer;
+  margin-bottom:4px;
+}
+.cipher-err{color:var(--err);font-size:14px;font-weight:600;min-height:20px;margin-top:6px}
+.cipher-ok{display:none}
+
+.riddle-inp{
+  width:100%;
+  min-height:48px;
+  padding:12px 14px;
+  font-size:18px;
+  font-weight:700;
+  border-radius:var(--radius-sm);
+  border:2px solid rgba(142,142,147,0.35);
+  background:rgba(255,255,255,0.9);
+  outline:none;
+  margin-bottom:8px;
+}
+.riddle-inp:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(10,132,255,0.2)}
+
+.hint-box{
+  background:rgba(255,149,0,0.12);
+  border:1px solid rgba(255,149,0,0.35);
+  border-radius:var(--radius-sm);
+  padding:12px 14px;
+  margin-bottom:14px;
+  font-size:14px;
+  color:var(--ink2);
+  line-height:1.5;
+}
+.hint-box strong{font-size:11px;font-weight:800;letter-spacing:0.1em;color:#c45c00;display:block;margin-bottom:6px}
+
+.mr-white-box{
+  background:linear-gradient(180deg,#3a3a3c,#2c2c2e);
+  border-radius:var(--radius-sm);
+  padding:18px;
+  text-align:center;
+  margin-bottom:14px;
+  border:1px solid rgba(255,255,255,0.12);
+}
+.mr-white-icon{font-size:40px;margin-bottom:10px;display:block}
+.mr-white-title{font-size:17px;font-weight:700;color:#fff;margin-bottom:8px}
+.mr-white-text{font-size:15px;color:#e8e8ed;line-height:1.55}
+.mr-white-note{font-size:14px;color:#aeaeb2;font-style:italic;margin-top:10px}
+
+.clue-content.showing{animation:fadeIn 0.4s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Clue modal (full clue text + cipher) ── */
+.clue-modal-root[hidden]{display:none!important}
+.clue-modal-root{
+  position:fixed;
+  inset:0;
+  z-index:5000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+}
+.clue-modal-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(15,23,42,0.5);
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+}
+.clue-modal-panel{
+  position:relative;
+  z-index:1;
+  width:min(100%,880px);
+  max-height:min(92dvh,920px);
+  display:flex;
+  flex-direction:column;
+  background:rgba(255,255,255,0.94);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,0.95);
+  box-shadow:0 25px 80px rgba(0,0,0,0.28);
+  overflow:hidden;
+}
+.clue-modal-toolbar{
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 18px;
+  border-bottom:1px solid rgba(0,0,0,0.08);
+  background:rgba(255,255,255,0.75);
+}
+.clue-modal-title{font-size:17px;font-weight:700;color:var(--text);line-height:1.25}
+.clue-modal-close{
+  flex-shrink:0;
+  width:44px;height:44px;
+  border:none;
+  border-radius:12px;
+  background:rgba(0,0,0,0.06);
+  font-size:26px;
+  line-height:1;
+  cursor:pointer;
+  color:var(--text);
+  transition:background 0.15s;
+}
+.clue-modal-close:hover{background:rgba(0,0,0,0.1)}
+.clue-modal-body{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding:20px 22px 32px;
+}
+.clue-modal-body .clue-content{
+  display:flex!important;
+  flex-direction:column;
+  max-width:100%;
+}
+.clue-modal-body .clue-title-bar{
+  margin:0 0 18px;
+  border-radius:var(--radius-sm);
+}
+.clue-modal-body .cipher-grid{
+  flex-wrap:nowrap;
+  overflow-x:auto;
+  padding-bottom:8px;
+  gap:10px;
+  -webkit-overflow-scrolling:touch;
+}
+.clue-modal-body .sym{
+  flex-shrink:0;
+  width:52px;
+  height:52px;
+  font-size:26px;
+}
+.clue-modal-body .cipher-key{
+  grid-template-columns:repeat(6,minmax(52px,1fr));
+  gap:10px;
+}
+@media (min-width:600px){
+  .clue-modal-body .cipher-key{grid-template-columns:repeat(8,minmax(0,1fr))}
+}
+.clue-modal-body .key-item{padding:10px 6px;min-height:72px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.clue-modal-body .key-let{font-size:11px;margin-top:6px}
+
+.win-box{
+  background:linear-gradient(180deg,#1f7a3a,#196b32) !important;
+  border:1px solid rgba(255,255,255,0.25) !important;
+}
+.win-box .next-label{color:rgba(255,255,255,0.75) !important}
+.win-box .next-text{color:#e8f5e9 !important}
+.win-box .next-code{color:#b8e6c3 !important;font-size:15px !important}
+
+.footer{
+  text-align:center;
+  margin-top:28px;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+
+@media (max-width:480px){
+  .pw-row{flex-direction:column}
+  .pw-btn{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="hero">
+    <p class="hero-eyebrow">The Investigation of Alexios of Athens</p>
+    <h1>The Oracle of Olympus</h1>
+    <p class="hero-lead">Your <strong>starting pack</strong> has the first 4-digit code for <strong>Clue I</strong> (your teacher will help). At each new place, look for the <strong>hidden tag that matches your team’s colour</strong>, bring it to your teacher, and they will <strong>scan it on their phone</strong> — that shows your <strong>4-digit code</strong>. Come back to this <strong>laptop</strong>, tap the matching clue card, type the code, and unlock the next part. Use your data sheet for the investigation.</p>
+    <div class="steps">
+      <span><b>1</b> Find your colour’s tag</span>
+      <span><b>2</b> Teacher scans → code</span>
+      <span><b>3</b> Type on laptop</span>
+    </div>
+  </header>
+
+  <div class="cards-grid">
+
+  <!-- CLUE 1 — EQUIPMENT SHED -->
+  <div class="card locked" id="card1">
+    <div class="card-visual" aria-hidden="true">🏛️</div>
+    <div class="card-head" onclick="togglePw(1)">
+      <div class="card-head-main">
+        <span class="card-num">Clue I</span>
+        <span class="card-loc">Equipment Shed</span>
+      </div>
+      <span class="card-tag">Locked</span>
+      <span class="card-chev">▼</span>
+      <div class="lock" aria-hidden="true"><div class="lock-u"></div><div class="lock-b"><div class="lock-h"></div></div></div>
+    </div>
+    <div class="pw-wrap" id="pw1">
+      <div class="pw-row">
+        <input class="pw-inp" id="pwinp1" placeholder="4-digit code" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" onkeydown="if(event.key==='Enter')unlock(1)">
+        <button type="button" class="pw-btn" onclick="unlock(1)">Unlock</button>
+      </div>
+      <p class="pw-err" id="pwerr1"></p>
+    </div>
+    <div class="clue-content" id="cc1">
+      <div class="clue-title-bar">
+        <span class="clue-label">Clue I · Equipment Shed</span>
+        <span class="clue-name">The Cipher of Delphi</span>
+      </div>
+      <p class="story-box">The Oracle has hidden a word in an ancient cipher. This word was found scratched into the floor of Alexios's warehouse — it is what he traded in every day, and what his killer may have stolen.</p>
+      <div class="task-box">Decode the seven symbols below using the key. Each symbol stands for a letter. Work through them one at a time and write each letter down. <strong>Type the full word in the box to check your answer.</strong></div>
+
+      <div class="cipher-wrap">
+        <span class="cipher-title">The encoded word</span>
+        <div class="cipher-grid">
+          <div class="sym">🗡</div>
+          <div class="sym">🔥</div>
+          <div class="sym">⚖</div>
+          <div class="sym">◈</div>
+          <div class="sym">🌊</div>
+          <div class="sym">☽</div>
+          <div class="sym">⚖</div>
+        </div>
+        <span class="cipher-title">The cipher key — symbols and letters</span>
+        <div class="cipher-key">
+          <div class="key-item"><span class="key-sym">⚡</span><span class="key-let">N</span></div>
+          <div class="key-item"><span class="key-sym">☽</span><span class="key-let">M</span></div>
+          <div class="key-item"><span class="key-sym">🏺</span><span class="key-let">T</span></div>
+          <div class="key-item"><span class="key-sym">⚔</span><span class="key-let">S</span></div>
+          <div class="key-item"><span class="key-sym">🌊</span><span class="key-let">H</span></div>
+          <div class="key-item"><span class="key-sym">✦</span><span class="key-let">E</span></div>
+          <div class="key-item"><span class="key-sym">◈</span><span class="key-let">C</span></div>
+          <div class="key-item"><span class="key-sym">🗡</span><span class="key-let">D</span></div>
+          <div class="key-item"><span class="key-sym">⚗</span><span class="key-let">L</span></div>
+          <div class="key-item"><span class="key-sym">⚖</span><span class="key-let">A</span></div>
+          <div class="key-item"><span class="key-sym">🔥</span><span class="key-let">R</span></div>
+          <div class="key-item"><span class="key-sym">☀</span><span class="key-let">O</span></div>
+          <div class="key-item"><span class="key-sym">🌿</span><span class="key-let">P</span></div>
+          <div class="key-item"><span class="key-sym">🪨</span><span class="key-let">F</span></div>
+          <div class="key-item"><span class="key-sym">🌙</span><span class="key-let">B</span></div>
+          <div class="key-item"><span class="key-sym">💧</span><span class="key-let">W</span></div>
+          <div class="key-item"><span class="key-sym">🪶</span><span class="key-let">I</span></div>
+          <div class="key-item"><span class="key-sym">🐍</span><span class="key-let">G</span></div>
+          <div class="key-item"><span class="key-sym">🌾</span><span class="key-let">K</span></div>
+          <div class="key-item"><span class="key-sym">🦅</span><span class="key-let">U</span></div>
+          <div class="key-item"><span class="key-sym">🪙</span><span class="key-let">V</span></div>
+          <div class="key-item"><span class="key-sym">⛵</span><span class="key-let">X</span></div>
+          <div class="key-item"><span class="key-sym">🏛️</span><span class="key-let">Y</span></div>
+          <div class="key-item"><span class="key-sym">🐚</span><span class="key-let">J</span></div>
+        </div>
+        <input class="cipher-inp" id="ciphinp1" placeholder="Type your decoded word" onkeydown="if(event.key==='Enter')checkCipher()">
+        <button type="button" class="cipher-btn" onclick="checkCipher()">Check my answer</button>
+        <p class="cipher-err" id="cipherr"></p>
+        <div id="cipher-ok" class="cipher-ok"></div>
+      </div>
+
+      <div id="c1-data" style="display:none">
+        <div class="data-box">
+          <span class="data-title">✦ Add this to your data sheet</span>
+          <div class="data-row">Name: <span>Sostrate</span> · City: <span>Athens</span> · Occupation: <span>Weaver</span><br>
+          Wealth: <span>Medium</span> · In Athens that night: <span>Yes</span><br>
+          Relationship: <span>Niece (blood relative)</span> · Debt: <span>Yes — 6 drachma</span><br>
+          Notes: Quiet and keeps to herself. Was seen near the market that evening.</div>
+        </div>
+        <div class="next-box">
+          <span class="next-label">Your next location</span>
+          <span class="next-text">Head to the <strong style="color:var(--gold-l)">Gazebo</strong>.<br>Find Mr White. You know what to do.</span>
+          <span class="next-code">At the <strong>Gazebo</strong>, find the hidden tag for <strong>your team’s colour</strong>. Bring it to your teacher — they scan it on their phone and tell you the 4-digit code. Enter it under <strong>Clue II · Gazebo</strong> on the laptop when you are ready for the next clue.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUE 2 — GAZEBO -->
+  <div class="card locked" id="card2">
+    <div class="card-visual" aria-hidden="true">🌳</div>
+    <div class="card-head" onclick="togglePw(2)">
+      <div class="card-head-main">
+        <span class="card-num">Clue II</span>
+        <span class="card-loc">Gazebo</span>
+      </div>
+      <span class="card-tag">Locked</span>
+      <span class="card-chev">▼</span>
+      <div class="lock" aria-hidden="true"><div class="lock-u"></div><div class="lock-b"><div class="lock-h"></div></div></div>
+    </div>
+    <div class="pw-wrap" id="pw2">
+      <div class="pw-row">
+        <input class="pw-inp" id="pwinp2" placeholder="4-digit code" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" onkeydown="if(event.key==='Enter')unlock(2)">
+        <button type="button" class="pw-btn" onclick="unlock(2)">Unlock</button>
+      </div>
+      <p class="pw-err" id="pwerr2"></p>
+    </div>
+    <div class="clue-content" id="cc2">
+      <div class="clue-title-bar">
+        <span class="clue-label">Clue II · Gazebo</span>
+        <span class="clue-name">The Challenge of Wits</span>
+      </div>
+      <p class="story-box">The Oracle does not give its secrets freely. To earn the next clue, your team must prove your minds are sharp.</p>
+
+      <div class="mr-white-box">
+        <span class="mr-white-icon">⚔️</span>
+        <p class="mr-white-title">Find Mr White</p>
+        <p class="mr-white-text">Challenge him to a game of noughts and crosses.<br><strong style="color:#fff">Your whole team must beat him.</strong><br>If he wins, you play again.</p>
+        <p class="mr-white-note">When you beat him, he will give you the missing data for your sheet. At the <strong>Gazebo</strong>, find your colour’s tag and bring it to your teacher to scan — you’ll get the 4-digit code for the laptop.</p>
+      </div>
+
+      <div class="data-box">
+        <span class="data-title">✦ Mr White will tell you what to add to your data sheet</span>
+        <div class="data-row">He will read you the details for <span>Bardas of Corinth</span> when you beat him.</div>
+      </div>
+      <div class="next-box">
+        <span class="next-label">Your next location</span>
+        <span class="next-text">Head to the <strong style="color:var(--gold-l)">Table Tennis Table</strong>.</span>
+        <span class="next-code">At the <strong>Table Tennis Table</strong>, find your colour’s tag, have your teacher scan it, then enter the 4-digit code under <strong>Clue III</strong> on the laptop.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUE 3 -->
+  <div class="card locked" id="card3">
+    <div class="card-visual" aria-hidden="true">🏓</div>
+    <div class="card-head" onclick="togglePw(3)">
+      <div class="card-head-main">
+        <span class="card-num">Clue III</span>
+        <span class="card-loc">Table Tennis Table</span>
+      </div>
+      <span class="card-tag">Locked</span>
+      <span class="card-chev">▼</span>
+      <div class="lock" aria-hidden="true"><div class="lock-u"></div><div class="lock-b"><div class="lock-h"></div></div></div>
+    </div>
+    <div class="pw-wrap" id="pw3">
+      <div class="pw-row">
+        <input class="pw-inp" id="pwinp3" placeholder="4-digit code" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" onkeydown="if(event.key==='Enter')unlock(3)">
+        <button type="button" class="pw-btn" onclick="unlock(3)">Unlock</button>
+      </div>
+      <p class="pw-err" id="pwerr3"></p>
+    </div>
+    <div class="clue-content" id="cc3">
+      <div class="clue-title-bar">
+        <span class="clue-label">Clue III · Table Tennis Table</span>
+        <span class="clue-name">Blood is Thicker Than Water</span>
+      </div>
+      <p class="story-box">The Oracle knows that family members stand first in line to inherit. But family members also know the most secrets. Alexios had blood relatives in Athens on the night he died — and one of them may not have told the full truth.</p>
+
+      <div class="task-box">Look at your Citizens Database. Go through the <strong>Relationship</strong> column carefully. Decide which relationships count as a blood relative — not all of them do. Cross-check with the <strong>In Athens that night?</strong> column.<br><br>
+      How many blood relatives were present in Athens on the night of the death?<br><br>
+      <strong>Write all their names on your data sheet before you answer.</strong></div>
+
+      <div class="hint-box">
+        <strong>HINT</strong>
+        Think carefully — not every family relationship means a blood relation. And make sure your database is complete. Did you fill in both missing witnesses from your scrolls?
+      </div>
+
+      <input class="riddle-inp" id="riddleinp" placeholder="Enter the number" inputmode="numeric" onkeydown="if(event.key==='Enter')checkRiddle()">
+      <button type="button" class="cipher-btn" onclick="checkRiddle()">Submit answer</button>
+      <p class="cipher-err" id="riddleerr"></p>
+
+      <div id="c3-after" style="display:none">
+        <div class="data-box" style="margin-top:12px">
+          <span class="data-title">✦ Note this down on your data sheet</span>
+          <div class="data-row">The five blood relatives in Athens were <span>Nikias</span>, <span>Lydia</span>, <span>Phoebe</span>, <span>Agathon</span> and <span>Sostrate</span>. Note: Euandros (stepbrother) and Philon (brother-in-law) are NOT blood relatives.</div>
+        </div>
+        <div class="next-box">
+          <span class="next-label">Your next location</span>
+          <span class="next-text">Head to the <strong style="color:var(--gold-l)">Football Goal</strong>.<br>Find Mr White again.</span>
+          <span class="next-code">At the <strong>Football Goal</strong>, find your colour’s tag, have your teacher scan it, then enter the 4-digit code under <strong>Clue IV</strong> on the laptop.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUE 4 -->
+  <div class="card locked" id="card4">
+    <div class="card-visual" aria-hidden="true">⚽</div>
+    <div class="card-head" onclick="togglePw(4)">
+      <div class="card-head-main">
+        <span class="card-num">Clue IV</span>
+        <span class="card-loc">Football Goal</span>
+      </div>
+      <span class="card-tag">Locked</span>
+      <span class="card-chev">▼</span>
+      <div class="lock" aria-hidden="true"><div class="lock-u"></div><div class="lock-b"><div class="lock-h"></div></div></div>
+    </div>
+    <div class="pw-wrap" id="pw4">
+      <div class="pw-row">
+        <input class="pw-inp" id="pwinp4" placeholder="4-digit code" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" onkeydown="if(event.key==='Enter')unlock(4)">
+        <button type="button" class="pw-btn" onclick="unlock(4)">Unlock</button>
+      </div>
+      <p class="pw-err" id="pwerr4"></p>
+    </div>
+    <div class="clue-content" id="cc4">
+      <div class="clue-title-bar">
+        <span class="clue-label">Clue IV · Football Goal</span>
+        <span class="clue-name">The Trial of Memory</span>
+      </div>
+      <p class="story-box">The Oracle tests not just your mind, but your memory. Ancient Greek messengers had to carry long messages in their heads. Can your team do the same?</p>
+
+      <div class="mr-white-box">
+        <span class="mr-white-icon">🏺</span>
+        <p class="mr-white-title">Find Mr White</p>
+        <p class="mr-white-text">Your whole team must recite <strong style="color:#fff">Humpty Dumpty</strong> — <strong style="color:#fff">backwards.</strong><br><br>Start from the last line and work to the first. Every team member must say at least one line.</p>
+        <p class="mr-white-note">When you finish, Mr White will give you the last piece of data for your sheet. At the <strong>Football Goal</strong>, find your colour’s tag and bring it to your teacher to scan — you’ll get the 4-digit code for the laptop.</p>
+      </div>
+
+      <div class="data-box">
+        <span class="data-title">✦ Mr White will give you data to add</span>
+        <div class="data-row">He will tell you the <span>Debt Amount</span> for <span>Agathon the Silversmith</span> — this is an important clue for your verdict.</div>
+      </div>
+      <div class="next-box">
+        <span class="next-label">Your next location</span>
+        <span class="next-text">Head to the <strong style="color:var(--gold-l)">Storytelling Chair</strong>.</span>
+        <span class="next-code">At the <strong>Storytelling Chair</strong>, find your colour’s tag, have your teacher scan it, then enter the 4-digit code under <strong>Clue V</strong> on the laptop.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLUE 5 -->
+  <div class="card locked" id="card5">
+    <div class="card-visual" aria-hidden="true">📚</div>
+    <div class="card-head" onclick="togglePw(5)">
+      <div class="card-head-main">
+        <span class="card-num">Clue V</span>
+        <span class="card-loc">Storytelling Chair</span>
+      </div>
+      <span class="card-tag">Locked</span>
+      <span class="card-chev">▼</span>
+      <div class="lock" aria-hidden="true"><div class="lock-u"></div><div class="lock-b"><div class="lock-h"></div></div></div>
+    </div>
+    <div class="pw-wrap" id="pw5">
+      <div class="pw-row">
+        <input class="pw-inp" id="pwinp5" placeholder="4-digit code" inputmode="numeric" pattern="[0-9]*" maxlength="8" autocomplete="off" onkeydown="if(event.key==='Enter')unlock(5)">
+        <button type="button" class="pw-btn" onclick="unlock(5)">Unlock</button>
+      </div>
+      <p class="pw-err" id="pwerr5"></p>
+    </div>
+    <div class="clue-content" id="cc5">
+      <div class="clue-title-bar">
+        <span class="clue-label">Clue V · Storytelling Chair</span>
+        <span class="clue-name">The Debtors of Alexios</span>
+      </div>
+      <p class="story-box">Alexios was generous with his money — perhaps too generous. Several citizens owed him drachma at the time of his death. But not all of them were even in Athens. The Oracle wants to know who was away.</p>
+
+      <div class="task-box">Look at your Citizens Database. Find all citizens who were <strong>NOT in Athens</strong> on the night of the death but who still have a debt recorded against them.<br><br>
+      How many citizens match both conditions — <strong>not in Athens AND has a debt?</strong><br><br>
+      <strong>Make sure your database is complete before you answer. Check your second scroll.</strong></div>
+
+      <div class="hint-box">
+        <strong>HINT</strong>
+        Your second witness from the scrolls was not in Athens that night — but he did owe Alexios money. If he is missing from your database, add him now before you answer.
+      </div>
+
+      <input class="riddle-inp" id="debtinp" placeholder="Enter the number" inputmode="numeric" onkeydown="if(event.key==='Enter')checkDebt()">
+      <button type="button" class="cipher-btn" onclick="checkDebt()">Submit answer</button>
+      <p class="cipher-err" id="debterr"></p>
+
+      <div id="c5-debt-after" style="display:none">
+        <div class="data-box" style="margin-top:12px">
+          <span class="data-title">✦ Well done — now unlock the final secret</span>
+          <div class="data-row">The three citizens not in Athens with a debt were <span>Sostrates</span>, <span>Eirene</span>, and <span>Bardas</span>. If Bardas was missing, add him now from your scroll.<br><br>
+          Now solve one last puzzle to complete your investigation.</div>
+        </div>
+
+        <div style="margin-top:14px">
+          <div class="clue-title-bar clue-title-bar--nested">
+            <span class="clue-label">Final Puzzle · Storytelling Chair</span>
+            <span class="clue-name">The Secret in the Scrolls</span>
+          </div>
+          <p class="story-box">Alexios was known to hide messages in plain sight. The Oracle has found a stack of books — but they are not here. They have been seen elsewhere in the school.</p>
+          <div class="task-box">
+            Make your way to the <strong>display board outside the Class 2 toilets</strong>.<br><br>
+            Look carefully at the books on the poster. The <strong>first letter of each book title</strong>, read from top to bottom, spells a secret word.<br><br>
+            Come back here and type the word to complete your investigation.
+          </div>
+
+          <input class="riddle-inp" id="booksinp" placeholder="Type the secret word" onkeydown="if(event.key==='Enter')checkBooks()">
+          <button type="button" class="cipher-btn" onclick="checkBooks()">Submit answer</button>
+          <p class="cipher-err" id="bookserr"></p>
+
+          <div id="c5-after" style="display:none">
+            <div class="next-box win-box" style="margin-top:12px">
+              <span class="next-label">Investigation complete</span>
+              <span class="next-text">All clues gathered. Your data sheet is now complete.<br><strong style="color:#fff">Return to the classroom and write your verdict.</strong></span>
+              <span class="next-code">Answer the three questions on your Verdict Sheet.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div>
+
+  <p class="footer">Five places · Five hidden tags · One truth</p>
+</div>
+
+<div id="clue-modal-root" class="clue-modal-root" hidden>
+  <div class="clue-modal-backdrop" onclick="closeClueModal()" aria-hidden="true"></div>
+  <div class="clue-modal-panel" role="dialog" aria-modal="true" aria-labelledby="clue-modal-title">
+    <div class="clue-modal-toolbar">
+      <span id="clue-modal-title" class="clue-modal-title">Clue</span>
+      <button type="button" class="clue-modal-close" onclick="closeClueModal()" aria-label="Close clue">×</button>
+    </div>
+    <div class="clue-modal-body" id="clue-modal-body"></div>
+  </div>
+</div>
+
+<script>
+/* Five 4-digit codes — see qr-code-pages (URLs can be written to NFC tags). Any code unlocks any clue card. */
+const PASSWORDS = new Set(['7392','5814','9260','3048','1675']);
+
+/** Short pause after a wrong passcode or answer to discourage rapid guessing (ms). */
+const GUESS_COOLDOWN_MS = 3000;
+const cooldownUntil = Object.create(null);
+
+function coolingRemaining(id){
+  const u = cooldownUntil[id];
+  if(!u) return 0;
+  return Math.max(0, u - Date.now());
+}
+
+function startGuessCooldown(id){
+  cooldownUntil[id] = Date.now() + GUESS_COOLDOWN_MS;
+}
+
+/** Returns true if blocked (caller should return). Sets err text to countdown. */
+function blockIfCooling(id, errEl){
+  const rem = coolingRemaining(id);
+  if(rem <= 0) return false;
+  const s = Math.ceil(rem / 1000);
+  if(errEl){
+    errEl.textContent = 'Please wait ' + s + 's before trying again.';
+    errEl.style.color = 'var(--muted)';
+  }
+  return true;
+}
+
+function scrollClueIntoView(el){
+  const mb = document.getElementById('clue-modal-body');
+  if(mb && mb.contains(el)) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+  else if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function closeClueModal(){
+  const panel = document.getElementById('clue-modal-body');
+  const cc = panel.querySelector('.clue-content');
+  if(!cc) return;
+  const n = cc.id.replace(/^cc/,'');
+  document.getElementById('card'+n).appendChild(cc);
+  cc.style.display = 'none';
+  document.getElementById('clue-modal-root').hidden = true;
+  document.body.style.overflow = '';
+}
+
+function openClueModal(n){
+  const cc = document.getElementById('cc'+n);
+  if(!cc.classList.contains('clue-unlocked')) return;
+  closeClueModal();
+  const locEl = document.querySelector('#card'+n+' .card-loc');
+  document.getElementById('clue-modal-title').textContent = locEl ? locEl.textContent.trim() : 'Clue';
+  document.getElementById('clue-modal-body').appendChild(cc);
+  cc.style.display = 'flex';
+  cc.classList.add('showing');
+  const root = document.getElementById('clue-modal-root');
+  root.hidden = false;
+  document.body.style.overflow = 'hidden';
+  setTimeout(()=>document.querySelector('.clue-modal-close').focus(),50);
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key === 'Escape' && !document.getElementById('clue-modal-root').hidden) closeClueModal();
+});
+
+function togglePw(n){
+  const card = document.getElementById('card'+n);
+  const pw = document.getElementById('pw'+n);
+  const showing = pw.style.display === 'flex';
+  pw.style.display = showing ? 'none' : 'flex';
+  card.classList.toggle('card-pw-open', !showing);
+  if(!showing) setTimeout(()=>document.getElementById('pwinp'+n).focus(),50);
+}
+
+function unlock(n){
+  const err = document.getElementById('pwerr'+n);
+  if(blockIfCooling('unlock-'+n, err)) return;
+  const val = document.getElementById('pwinp'+n).value.replace(/\s/g,'');
+  if(!val){
+    err.textContent = 'Enter a code.';
+    err.style.color = 'var(--err)';
+    return;
+  }
+  if(PASSWORDS.has(val)){
+    const card = document.getElementById('card'+n);
+    card.classList.remove('locked');
+    card.classList.add('open');
+    card.querySelector('.card-tag').textContent = 'Unlocked';
+    document.getElementById('pw'+n).style.display = 'none';
+    card.classList.remove('card-pw-open');
+    err.textContent = '';
+    err.style.color = '';
+    const cc = document.getElementById('cc'+n);
+    cc.classList.add('clue-unlocked');
+    card.querySelector('.card-head').onclick = function(){ openClueModal(n); };
+    openClueModal(n);
+  } else {
+    startGuessCooldown('unlock-'+n);
+    err.style.color = 'var(--err)';
+    err.textContent = 'The Oracle remains silent. Check the code and try again.';
+  }
+}
+
+function checkCipher(){
+  const err = document.getElementById('cipherr');
+  if(blockIfCooling('cipher', err)) return;
+  const val = document.getElementById('ciphinp1').value.trim().toUpperCase();
+  if(!val){
+    err.style.color = 'var(--err)';
+    err.textContent = 'Type a word to check.';
+    return;
+  }
+  if(val === 'DRACHMA'){
+    err.textContent = '';
+    document.getElementById('cipher-ok').innerHTML = '<p style="color:#248a3d;font-weight:700;font-size:14px;margin-top:8px">✦ Correct — the word is DRACHMA</p>';
+    document.getElementById('cipher-ok').style.display = 'block';
+    document.getElementById('c1-data').style.display = 'block';
+    scrollClueIntoView(document.getElementById('c1-data'));
+  } else {
+    startGuessCooldown('cipher');
+    err.style.color = 'var(--err)';
+    err.textContent = 'Not quite. Look at the key again and try each symbol one at a time.';
+  }
+}
+
+function checkRiddle(){
+  const err = document.getElementById('riddleerr');
+  if(blockIfCooling('riddle', err)) return;
+  const val = document.getElementById('riddleinp').value.trim().toUpperCase();
+  if(!val){
+    err.style.color = 'var(--err)';
+    err.textContent = 'Enter a number.';
+    return;
+  }
+  if(val === '5'){
+    err.textContent = '';
+    err.style.color = '#248a3d';
+    err.textContent = '✦ Correct — five blood relatives were in Athens that night.';
+    document.getElementById('c3-after').style.display = 'block';
+    scrollClueIntoView(document.getElementById('c3-after'));
+  } else {
+    startGuessCooldown('riddle');
+    err.style.color = 'var(--err)';
+    if(val === '4'){
+      err.textContent = 'Not quite — your database might be incomplete. Did you add both witnesses from your scrolls?';
+    } else if(val === '7' || val === '6'){
+      err.textContent = 'Too many — some of those relationships are not blood relations. Think carefully about each one.';
+    } else {
+      err.textContent = 'Not quite. Look carefully at each relationship and decide if it counts as a blood relation.';
+    }
+  }
+}
+
+function checkDebt(){
+  const err = document.getElementById('debterr');
+  if(blockIfCooling('debt', err)) return;
+  const val = document.getElementById('debtinp').value.trim();
+  if(!val){
+    err.style.color = 'var(--err)';
+    err.textContent = 'Enter a number.';
+    return;
+  }
+  if(val === '3'){
+    err.textContent = '';
+    err.style.color = '#248a3d';
+    err.textContent = '✦ Correct — three citizens were not in Athens but owed a debt.';
+    document.getElementById('c5-debt-after').style.display = 'block';
+    scrollClueIntoView(document.getElementById('c5-debt-after'));
+  } else {
+    startGuessCooldown('debt');
+    err.style.color = 'var(--err)';
+    if(val === '2'){
+      err.textContent = 'Not quite — your database might be incomplete. Did you add the second missing witness from your scroll?';
+    } else {
+      err.textContent = 'Not quite. Filter for No in Athens AND Yes for debt and count carefully.';
+    }
+  }
+}
+
+function checkBooks(){
+  const err = document.getElementById('bookserr');
+  if(blockIfCooling('books', err)) return;
+  const val = document.getElementById('booksinp').value.trim().toUpperCase();
+  if(!val){
+    err.style.color = 'var(--err)';
+    err.textContent = 'Type the secret word.';
+    return;
+  }
+  if(val === 'COFFEE'){
+    err.textContent = '';
+    err.style.color = '#248a3d';
+    err.textContent = '✦ Correct — well spotted!';
+    document.getElementById('c5-after').style.display = 'block';
+    scrollClueIntoView(document.getElementById('c5-after'));
+  } else {
+    startGuessCooldown('books');
+    err.style.color = 'var(--err)';
+    err.textContent = 'Look again. Read the first letter of each book spine from top to bottom.';
+  }
+}
+</script>
+</body>
+</html>
