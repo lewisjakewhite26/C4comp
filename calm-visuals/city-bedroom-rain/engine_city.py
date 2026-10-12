@@ -54,13 +54,16 @@ def flash(t):
 # rain on glass: sliding drops with trails (loop-safe, integer cycles)
 DR=[]
 panes=[(165,435),(480,905),(950,1200)]
-for _ in range(210):
+for _ in range(650):
     a,b=R.choice(panes); x=X(R.uniform(a,b)); ln=R.uniform(20,80); k=R.randint(1,4)
     DR.append((x,R.uniform(0,H+ln),ln,k,R.uniform(0.25,0.7),R.uniform(1,2.2),R.uniform(0,6.28)))
 STR=[]
-for _ in range(120):
-    a,b=R.choice(panes); x=X(R.uniform(a,b)); ln=R.uniform(40,160); k=R.randint(1,3)
+for _ in range(380):
+    a,b=R.choice(panes); x=X(R.uniform(a,b)); ln=R.uniform(40,200); k=R.randint(1,3)
     STR.append((x,R.uniform(0,H+ln),ln,k,R.uniform(0.12,0.28)))
+BIG=[]
+for _ in range(70):
+    a,b=R.choice(panes); BIG.append((X(R.uniform(a,b)),R.uniform(0,1500),R.uniform(90,260),R.randint(1,2),R.uniform(2.4,4.0),R.uniform(0,6.28)))
 def rain(t):
     lay=np.zeros((H,W),np.float32)
     for (x,y0,ln,k,al,r,p) in DR:
@@ -71,7 +74,13 @@ def rain(t):
     for (x,y0,ln,k,al) in STR:
         Lc=H+ln; y=(y0+Lc*k*t/T)%Lc-ln
         cv2.line(lay,(int(x),int(y-ln)),(int(x+2*math.sin(y/37.0)),int(y)),al*0.8,1,cv2.LINE_AA)
-    return lay*glass
+    for (x,y0,ln,k,r,p) in BIG:
+        Lc=H+ln; y=(y0+Lc*k*t/T)%Lc-ln
+        xo=x+5*math.sin(2*math.pi*(2*k)*t/T+p)+4*math.sin(y/53.0+p)
+        cv2.line(lay,(int(xo),int(y-ln)),(int(xo),int(y)),0.20,2,cv2.LINE_AA)
+        cv2.circle(lay,(int(xo),int(y)),int(r),0.62,-1,cv2.LINE_AA)
+        cv2.circle(lay,(int(xo-r*0.3),int(y-r*0.3)),max(1,int(r*0.4)),0.9,-1,cv2.LINE_AA)
+    return cv2.GaussianBlur(lay,(0,0),0.6)*glass
 BED=np.clip((yy-X(560))/X(60),0,1)
 CLOUD=np.clip((X(330)-yy)/X(250),0,1)*glass
 VIG=1-0.35*np.clip((np.hypot((xx-W/2)/(W/2),(yy-H/2)/(H/2))-0.55)/0.8,0,1)**1.6
@@ -103,7 +112,7 @@ def render(i):
     z=1+0.005*(1-math.cos(ph))/2; mx=(mx-W/2)/z+W/2; my=(my-H/2)/z+H/2
     out=cv2.remap(out,mx.astype(np.float32),my.astype(np.float32),cv2.INTER_LINEAR,borderMode=cv2.BORDER_REPLICATE)
     rl=rain(t)
-    out+=rl[...,None]*np.array([225,205,170],np.float32)*(0.55+0.5*f)
+    out+=rl[...,None]*np.array([225,205,170],np.float32)*(0.7+0.5*f)
     out=out*VIG[...,None]+GRAIN[i%5]
     return np.clip(out,0,255).astype(np.uint8)
 def worker(f0,f1,outf):
