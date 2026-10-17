@@ -4,13 +4,13 @@ from scipy.ndimage import gaussian_filter1d
 W,H=1080,1920; F=1500.0; FPS=scene.FPS; S=scene.build(); POS=S['pos']; PL=S['plates']; N=scene.N; T0=scene.T0; BEAT=scene.BEAT; DUR=scene.DUR
 NF=int(DUR*FPS)
 def ease(x): x=min(max(x,0),1); return x*x*(3-2*x)
-def uof(t): return min(max((t-T0)/BEAT,0.0),N-1.0)
+def uof(t): return min(max((t-T0)/BEAT,0.0),float(N))
 # camera target per frame (smoothed, lookahead)
 ts=np.arange(NF)/FPS
-TG=np.array([POS(np.array(min(uof(t)+1.3,N-1+0.3))) for t in ts]); TG=gaussian_filter1d(TG,10,axis=0,mode='nearest')
+TG=np.array([POS(np.array(min(uof(t)+0.5,float(N)))) for t in ts]); TG=gaussian_filter1d(TG,12,axis=0,mode='nearest')
 def camera(f):
     t=f/FPS; tg=np.array([TG[f][0],TG[f][1],0.0])
-    D=7.4+(1-ease(t/2.2))*6.0+ease((t-(T0+(N-1)*BEAT))/4.5)*9.0
+    D=8.6+(1-ease(t/2.2))*6.0+ease((t-(T0+N*BEAT))/4.5)*9.0
     pitch=math.radians(52+5*math.sin(t*0.21)+ (1-ease(t/2.2))*14)
     yaw=math.radians(9*math.sin(t*0.27)+4*math.sin(t*0.61))
     off=np.array([math.sin(yaw)*math.cos(pitch)*-D*-1*-1*-1, -math.cos(yaw)*math.cos(pitch)*D, math.sin(pitch)*D])
@@ -52,8 +52,8 @@ def poly(img,cam,q,col):
     P=np.clip(P,-20000,20000).astype(np.int32); cv2.fillConvexPoly(img,P,col,cv2.LINE_AA)
 cellset=set(S['cells'])
 crnd=random.Random(9); CELLCOL={c:tuple(int(v+crnd.randint(-7,7)) for v in (146,128,156)) for c in S['cells']}
-HITF={}  # cell idx -> plate
-for p in PL: HITF[p['i']]=p
+HITF={}
+for p in PL: HITF[p['cell']]=p
 CIDX={c:i for i,c in enumerate(S['cells'])}
 def glow_c(g,cam,p3,rad,col,k=1.0):
     P,z=cam.proj(p3)
@@ -73,8 +73,8 @@ def sphere(img,cam,p3,rad,col,k=1.0):
 def render(f):
     t=f/FPS; cam=Cam(f); img=BG.copy(); g=np.zeros((H//4,W//4,3),np.uint8); u=uof(t)
     # tint per cell from hit age
-    def age(i):
-        p=HITF.get(i); return (t-p['t']) if p else -1
+    def age(c):
+        p=HITF.get(c); return (t-p['t']) if p else -1
     # floor cells far->near
     items=[]
     for ci,c in enumerate(S['cells']):
@@ -106,10 +106,10 @@ def render(f):
             dep=16 if kind==0 else 1.6
             lowq=np.array([[p[0],p[1],(zt-band if abs(p[2]-(ctr[2]+hh))<1e-6 else zt-dep)] for p in q])
             poly(img,cam,lowq,bgr(Bc))
-        a=age(ci) if kind==0 else -1
+        a=age(c) if kind==0 else -1
         tcol=np.array(base,float)
         if a>=0:
-            pc=np.array(HITF[ci]['col'],float); k=0.5*math.exp(-a/0.55); tcol=tcol*(1-k)+pc*k
+            pc=np.array(HITF[c]['col'],float); k=0.5*math.exp(-a/0.55); tcol=tcol*(1-k)+pc*k
         top=box_faces(ctr,(1,0),(0,1),0.5,0.5,hh)[4][2]  # +z face
         poly(img,cam,top,bgr(tuple(tcol)))
         # bricks
@@ -135,32 +135,32 @@ def render(f):
     # objects
     obj=[]
     for p in PL:
-        if abs(p['i']-u)>16: continue
+        if np.linalg.norm(p['c']-TG[f][:2])>16: continue
         c3=np.array([p['c'][0],p['c'][1],0.4]); obj.append((np.linalg.norm(c3-cam.C),'plate',p))
     for i,(bp,ang) in enumerate(S['blocks']):
-        if abs(i*5+2-u)>16: continue
+        if np.linalg.norm(bp-TG[f][:2])>16: continue
         c3=np.array([bp[0],bp[1],0.2]); obj.append((np.linalg.norm(c3-cam.C),'block',(bp,ang)))
     for (ox,oy,oz,col,ph) in S['orbs']:
         if abs(oy-TG[f][1])>16: continue
         o3=np.array([ox,oy,oz+0.3*math.sin(t*0.8+ph)]); obj.append((np.linalg.norm(o3-cam.C),'orb',(o3,col)))
     # trail beads
-    ds=0.34; kmax=int(u/ds*0+u/0.34)
-    # bead absolute params along cell-index u: spacing 0.34 cell
-    for k in range(max(0,int(u/ds)-16),int(u/ds)+1):
+    ds=0.11; kk=int(u/ds)
+    for k in range(max(0,kk-16),kk+1):
         uk=k*ds; beh=u-uk
-        if beh<0.28 or beh>5.2: continue
-        xy=POS(np.array(uk)); rad=0.19*(1-beh/5.6)**1.1; col=scene.PAL[k%6]
-        b3=np.array([xy[0],xy[1],rad]); obj.append((np.linalg.norm(b3-cam.C),'bead',(b3,rad,col,1-beh/5.6)))
-    bxy=POS(np.array(u)); bounce=0.07*abs(math.sin(math.pi*u)) if t>T0 else 0
-    ball=np.array([bxy[0],bxy[1],0.33+bounce]); obj.append((np.linalg.norm(ball-cam.C),'ball',ball))
+        if beh<0.06 or beh>1.55: continue
+        xy=POS(np.array(uk)); fa=1-beh/1.7; rad=0.03+0.17*fa; col=scene.PAL[k%6]
+        b3=np.array([xy[0],xy[1],rad]); obj.append((np.linalg.norm(b3-cam.C),'bead',(b3,rad,col,fa)))
+    bxy=POS(np.array(u)); hop=0.17*abs(math.sin(math.pi*u)) if (t>T0 and u<N) else 0
+    ball=np.array([bxy[0],bxy[1],0.33+hop]); obj.append((np.linalg.norm(ball-cam.C),'ball',ball))
     obj.sort(key=lambda a:-a[0])
     shadows=[]
     for d,kd,dt in obj:
         if kd=='plate':
             p=dt; a=t-p['t']; fl=math.exp(-a/0.4) if a>=0 else 0
             col=np.array(p['col'],float)*(0.82+0.0)+255*0.0; col=tuple(col*(1-0.7*fl)+255*0.7*fl)
-            c3=np.array([p['c'][0],p['c'][1],0.3]); uv=(math.cos(p['ang']),math.sin(p['ang'])); vv=(-uv[1],uv[0])
-            for n,fc,q in box_faces(c3,uv,vv,0.2,0.04,0.3):
+            rec=0.07*math.exp(-a/0.1) if a>=0 else 0
+            c3=np.array([p['c'][0]+p['din'][0]*rec,p['c'][1]+p['din'][1]*rec,0.3]); uv=(math.cos(p['ang']),math.sin(p['ang'])); vv=(-uv[1],uv[0])
+            for n,fc,q in box_faces(c3,uv,vv,0.3,0.05,0.34):
                 if np.dot(n,cam.C-fc)<=0 or n[2]<-0.5: continue
                 sh=0.62+0.55*max(0,np.dot(n,LIGHT)); poly(img,cam,q,bgr(col,min(1.25,sh)))
             if a>=0: glow_c(g,cam,c3,0.5+0.3*fl,p['col'],0.55*fl)
@@ -181,14 +181,14 @@ def render(f):
         a=t-p['t']
         if not(0<=a<1.3): continue
         pr=random.Random(p['i']*7+1)
-        for _ in range(9):
-            vx,vy=pr.uniform(-0.8,0.8),pr.uniform(-0.8,0.8); vz=pr.uniform(1.0,2.6); col=scene.PAL[pr.randrange(6)]
-            c0=np.array([p['c'][0],p['c'][1],0.4]); pos3=c0+np.array([vx*a,vy*a,vz*a-2.2*a*a])
+        for _ in range(16):
+            bk=pr.uniform(0.3,1.7); sd=pr.uniform(-1.3,1.3); vx=-p['din'][0]*bk-p['din'][1]*sd; vy=-p['din'][1]*bk+p['din'][0]*sd; vz=pr.uniform(0.8,2.8); col=scene.PAL[pr.randrange(6)]
+            c0=np.array([p['cp'][0],p['cp'][1],0.4]); pos3=c0+np.array([vx*a,vy*a,vz*a-2.2*a*a])
             if pos3[2]<0.02: continue
             k=1-a/1.3; glow_c(g,cam,pos3,0.05+0.04*k,col,0.9*k)
             sphere(img,cam,pos3,0.035*k+0.01,col,1.0)
     # finale glow
-    te=T0+(N-1)*BEAT
+    te=T0+N*BEAT
     if t>te:
         a=t-te; k=math.exp(-a/1.6)
         for ci,c in enumerate(S['cells'][::2]):

@@ -17,13 +17,13 @@ def bass(f,d=1.2,v=1.0):
     t=np.arange(int(d*SR))/SR; return np.sin(2*np.pi*f*t)*np.exp(-t/0.5)*np.minimum(1,t/0.01)*v
 # melody on plate hits
 for p in S['plates']:
-    if p['i']==scene.N-1: continue
+    if p['i']==scene.N: continue
     v=0.85+0.15*np.random.RandomState(p['i']).rand(); x=marimba(hz(p['midi']),2.4,0.30*v); pan=0.5+0.22*p['side']
     add(L,p['t'],x*(1-pan)*1.2); add(R,p['t'],x*pan*1.2)
     add(wl,p['t'],x*0.5*(1-pan)); add(wr,p['t'],x*0.5*pan)
 # bars: chords + bass + soft echo notes on off-beats (octave up quiet)
 prog=[(48,[60,64,67]),(45,[57,60,64]),(41,[53,57,60]),(43,[55,59,62])]
-nb=(scene.N-1)//4+1
+nb=scene.N//4+1
 for b in range(nb):
     t0=scene.T0+(1+4*b)*scene.BEAT-0.0; root,ch=prog[b%4]; d=4*scene.BEAT+0.8
     for m in ch:
@@ -34,7 +34,7 @@ for b in range(nb):
     for k,m in ((1.5,ch[2]+24),(3.5,ch[1]+24)):
         x=marimba(hz(m),1.6,0.06); add(wl,t0+k*scene.BEAT,x); add(wr,t0+k*scene.BEAT,x*0.8)
 # finale
-te=scene.T0+(scene.N-1)*scene.BEAT
+te=scene.T0+scene.N*scene.BEAT
 for k,m in enumerate([72,76,79,83,86,91]):
     x=marimba(hz(m),3.5,0.34); add(L,te+k*0.11,x); add(R,te+k*0.11,x); add(wl,te+k*0.11,x*0.9); add(wr,te+k*0.11,x*0.9)
 for m in (48,60,64,67,71,74):
