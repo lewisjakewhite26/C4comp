@@ -21,6 +21,13 @@ What TikTok confirms about ranking: finishing a longer video is a strong signal,
 
 Start each new chat with: "Read the ZonelyTime TikTok Playbook doc and the README in the C4comp repo folder for the task, then carry on with \<task>." Working files from an old chat don't carry over, so anything still needed lives in the GitHub repo [lewisjakewhite26/C4comp](https://github.com/lewisjakewhite26/C4comp).
 
+Never clone the whole repo: it's about 5 GB of videos. Clone only the latest version of the playbook and the one folder the task needs (a few seconds, under 100 MB):
+
+```
+git clone --depth 1 --filter=blob:none --sparse https://github.com/lewisjakewhite26/C4comp.git
+cd C4comp && git sparse-checkout set <folder>
+```
+
 **Working rules**
 
 - UK English. Answer questions without building until Lewis says go.
