@@ -2,7 +2,7 @@
 
 Oct 23, 2026 · @Lewis
 
-> Copy of the Claude doc [ZonelyTime TikTok Playbook](https://claude.ai/artifact/6Nsh15yYtZSGZkmoucvZXL). The doc is the master; this file is re-exported and pushed after every change. Last synced 24 Oct 2026.
+> Copy of the Claude doc [ZonelyTime TikTok Playbook](https://claude.ai/artifact/6Nsh15yYtZSGZkmoucvZXL). The doc is the master; this file is re-exported and pushed after every change. Last synced 26 Oct 2026.
 
 ## How this doc works
 
@@ -79,6 +79,8 @@ On our account, cosy weather scenes beat everything else: every post above 600 v
 
 Audience (Japanese house post): 80% women, 25–34 the largest age group, 60% UK. The Japanese house post got all its views on day one, in line with a large study finding 96% of a post's views arrive within its first 10 days.
 
+**New lead format (Ours, one post so far):** the \~60-second "satisfying build" Short. The firefly jar got 7x the views of any earlier YouTube Short despite a lower stayed-to-watch rate (16.9% vs 19.9%), which suggests total watch time from a long, building payoff matters more than the first-second swipe rate. Confirm with the retention graph and two or three more posts in the series.
+
 ## Captions, hashtags, timing and frequency
 
 Post every day at about 6:30pm UK time. Our viewers peak between 7 and 8pm (Ours), and a 2.3M-post study puts the global peak at 6–9pm, with 8pm the top hour (Study).
@@ -130,6 +132,8 @@ Add a row for every post. Fill in the stats 7 days after posting, by which point
 
 | Video | Posted | Length (s) | Views | Avg watch (s) | Full views (%) | Likes | Cat? |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| Firefly jar, "every firefly that escapes adds two more" (YouTube Short) | 25 Oct | 62 | 1,161 in 3 h (best ever on YouTube; 2 push waves; 97% Shorts feed; 25% of watch time on TV; stayed to watch 16.9%) | pending |  |  | No |
+| Port in the storm (YouTube Short) | \~22 Oct | 10 | 159 (1 push wave, then flat; stayed to watch 19.9%) | 27 (250%) |  |  | No |
 | Japanese house · rain & lo-fi | 18 Oct | 18 | 727 | 2.9 | 1.35 |  | Yes |
 | Watch the valley fall asleep | 20 Oct |  | 681 |  |  |  | No |
 | A minute in the deep sea (jellyfish timer) | 20 Oct | 60 | 447 |  |  |  | No |
