@@ -239,14 +239,14 @@ def jar_draw(img,t,nin,sl):
     img[RY0:RY1,RX0:RX1]=roi
 # text
 FB=ImageFont.truetype('/usr/share/fonts/opentype/inter/InterDisplay-SemiBold.otf',max(8,int(P(92))))
-FS=ImageFont.truetype('/usr/share/fonts/opentype/inter/Inter-Medium.otf',max(8,int(P(44))))
+FS=ImageFont.truetype('/usr/share/fonts/opentype/inter/InterDisplay-Bold.otf',max(8,int(P(64))))
 FL=ImageFont.truetype('/usr/share/fonts/opentype/inter/Inter-Medium.otf',max(8,int(P(34))))
 im=Image.new('L',(W,H),0); d=ImageDraw.Draw(im)
-d.text((W/2,P(52)),"every firefly that escapes",font=FS,fill=255,anchor='mm')
-d.text((W/2,P(106)),"lights a window",font=FS,fill=255,anchor='mm')
+d.text((W/2,P(58)),os.environ.get('HOOK1','can 170 fireflies'),font=FS,fill=255,anchor='mm')
+d.text((W/2,P(132)),os.environ.get('HOOK2','light the whole tower?'),font=FS,fill=255,anchor='mm')
 d.text((P(300),P(1668)),"windows lit",font=FL,fill=255,anchor='mm')
 HOOK=np.asarray(im,np.float32)/255; HSH=cv2.GaussianBlur(HOOK,(0,0),P(9))
-topfade=np.clip(1-np.arange(H,dtype=np.float32)/P(190),0,1)[:,None]*np.ones((1,W),np.float32)
+topfade=np.clip(1-np.arange(H,dtype=np.float32)/P(250),0,1)[:,None]**0.8*np.ones((1,W),np.float32)
 _cc={}
 def count_mask(n):
     if n not in _cc:
@@ -261,7 +261,7 @@ def frame(f):
     else:
         a=t-TSL; sl=min(1,a/1.2) if a>0.5 else [0,0.7,0,0.4,0.9][min(4,int(a/0.1))]
     img=DARK*(1-sl)+LIT*sl
-    img=img*(1-0.45*topfade[...,None])
+    img=img*(1-0.62*topfade[...,None])
     for w in range(NW):
         k=inten(w,t)
         if k<=0: continue
@@ -289,7 +289,7 @@ def frame(f):
     soft=cv2.GaussianBlur(core,(0,0),P(1.8)); soft=soft/(1+soft*0.35)
     img+=(halo*0.55)[...,None]*HALO+np.clip(soft,0,1.4)[...,None]*FIRE
     # text
-    img=img*(1-HSH[...,None]*0.5)
+    img=img*(1-np.clip(HSH*1.6,0,0.8)[...,None])
     img=img*(1-HOOK[...,None])+HOOK[...,None]*np.array([235,240,248],np.float32)
     nl=int((TON<=t).sum())
     cm=count_mask(nl); img=img*(1-cm[...,None])+cm[...,None]*np.array([235,240,248],np.float32)
@@ -307,7 +307,7 @@ def audio(out):
     sc=[root*2**(k/12) for k in (0,3,5,7,10,12,15,17)]
     m=np.zeros(n,np.float32); last=-1; k=0
     for t_ in np.sort(TON[TON<1e8]):
-        if t_-last<float(_os.environ.get('NOTEGAP','0.22')): continue
+        if t_-last<float(os.environ.get('NOTEGAP','0.22')): continue
         last=t_; k+=1
         s=note(sc[(k*3)%len(sc)],1.3,0.08); a=int(t_*SR); q=min(len(s),n-a); m[a:a+q]+=s[:q]
     ch=note(root/2,4,0.12)+note(root*2**(7/12)/2,4,0.08)+note(root*2**(3/12),4,0.06)
