@@ -298,8 +298,8 @@ def frame(f):
 SR=48000
 def note(freq,dur,amp):
     n=int(dur*SR); tt=np.arange(n)/SR
-    env=np.exp(-tt*4.0)*np.minimum(1,tt*700)
-    s=sum(a*np.sin(2*np.pi*freq*h*tt)*np.exp(-tt*h*1.3) for h,a in ((1,1),(2,0.2),(3,0.45),(5,0.12)))
+    env=np.exp(-tt*3.2)*np.minimum(1,tt*120)          # softer attack: no sharp 'ting'
+    s=sum(a*np.sin(2*np.pi*freq*h*tt)*np.exp(-tt*h*1.8) for h,a in ((1,1),(2,0.15),(3,0.2)))
     return (s*env*amp).astype(np.float32)
 def audio(out):
     mus=np.frombuffer(subprocess.run(['ffmpeg','-v','error','-i',D+'citybed/city_night_bed.mp3','-t',str(DUR),'-ac','2','-ar',str(SR),'-f','f32le','-'],capture_output=True).stdout,np.float32).reshape(-1,2).copy()
@@ -316,10 +316,14 @@ def audio(out):
     for d_,g in ((0.12,0.3),(0.27,0.18),(0.45,0.1)): i=int(d_*SR); e[i:]+=m[:-i]*g
     notes=np.stack([e,np.roll(e,int(0.01*SR))],1)
     rms=lambda x: float(np.sqrt((x**2).mean()))+1e-9
-    mix=mus*0.7+notes*(rms(mus)*0.6/rms(notes))
+    mix=mus*0.8+notes*(rms(mus)*float(os.environ.get('NOTEG','0.28'))/rms(notes))
     fo=int(2.5*SR); mix[-fo:]*=np.linspace(1,0,fo)[:,None]; mix/=max(1,np.abs(mix).max()/0.89)
     subprocess.run(['ffmpeg','-y','-v','error','-f','f32le','-ar',str(SR),'-ac','2','-i','-',out],input=mix.astype(np.float32).tobytes())
 if __name__=='__main__':
+    if sys.argv[1]=='audio':
+        audio(O+'ta.wav')
+        subprocess.run(['ffmpeg','-y','-v','error','-i',O+sys.argv[2],'-i',O+'ta.wav','-map','0:v','-map','1:a','-c:v','copy','-af','loudnorm=I=-14:TP=-1.5:LRA=11','-ar','48000','-c:a','aac','-b:a','192k','-shortest','-movflags','+faststart',O+sys.argv[3]])
+        sys.exit()
     if sys.argv[1]=='still':
         for tt in sys.argv[2].split(','): cv2.imwrite(O+f'ts_{tt}.jpg',frame(min(len(FR)-1,int(float(tt)*FPS))))
         sys.exit()
