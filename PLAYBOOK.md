@@ -2,8 +2,6 @@
 
 Oct 23, 2026 · @Lewis
 
-> Copy of the Claude doc [ZonelyTime TikTok Playbook](https://claude.ai/artifact/6Nsh15yYtZSGZkmoucvZXL). The doc is the master; this file is re-exported and pushed after every change. Last synced 26 Oct 2026.
-
 ## How this doc works
 
 Every rule carries one of four tags, strongest first:
@@ -36,7 +34,11 @@ cd C4comp && git sparse-checkout set <folder>
 - No Pixabay audio files in the public repo. No Suno music in monetised videos. Lyria mixes are cleared.
 - Tick the AI disclosure on every upload. Check what's already posted before making something new.
 - Canva images can't be pulled into Claude's workspace: Lewis has to download and attach them.
-- After any change to the playbook doc, export it to PLAYBOOK.md in the repo and push.
+  - After any change to this doc, export it to PLAYBOOK.md in the repo and push.
+
+**Engines:** every render, physics and audio script is saved in `engines/` in the repo (see `engines/README.md`): firefly jar, firefly tower, snowflake crystal, ring escape and timers, capybara loops, the 2-hour music mixer, rain bed, jellyfish and lava timers, and the older scene loops. Start new videos from these rather than from scratch, add `engines/` to the sparse checkout when needed, and save any new engine there. Pymunk (2D physics) is installed and approved for escape, bounce and pile-up Shorts. Taichi (sand, snow, water) and Blender are options for later, so ask before installing.
+
+**Audio cleared:** Lyria, Meta AI and ElevenLabs (paid plan, including sound effects). Never Suno or Pixabay in monetised videos.
 
 **In progress**
 
