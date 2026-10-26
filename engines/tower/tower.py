@@ -307,7 +307,7 @@ def audio(out):
     sc=[root*2**(k/12) for k in (0,3,5,7,10,12,15,17)]
     m=np.zeros(n,np.float32); last=-1; k=0
     for t_ in np.sort(TON[TON<1e8]):
-        if t_-last<0.09: continue
+        if t_-last<float(_os.environ.get('NOTEGAP','0.22')): continue
         last=t_; k+=1
         s=note(sc[(k*3)%len(sc)],1.3,0.08); a=int(t_*SR); q=min(len(s),n-a); m[a:a+q]+=s[:q]
     ch=note(root/2,4,0.12)+note(root*2**(7/12)/2,4,0.08)+note(root*2**(3/12),4,0.06)
@@ -316,7 +316,7 @@ def audio(out):
     for d_,g in ((0.12,0.3),(0.27,0.18),(0.45,0.1)): i=int(d_*SR); e[i:]+=m[:-i]*g
     notes=np.stack([e,np.roll(e,int(0.01*SR))],1)
     rms=lambda x: float(np.sqrt((x**2).mean()))+1e-9
-    mix=mus*0.8+notes*(rms(mus)*float(os.environ.get('NOTEG','0.28'))/rms(notes))
+    mix=mus*0.8+notes*(rms(mus)*float(os.environ.get('NOTEG','0.12'))/rms(notes))
     fo=int(2.5*SR); mix[-fo:]*=np.linspace(1,0,fo)[:,None]; mix/=max(1,np.abs(mix).max()/0.89)
     subprocess.run(['ffmpeg','-y','-v','error','-f','f32le','-ar',str(SR),'-ac','2','-i','-',out],input=mix.astype(np.float32).tobytes())
 if __name__=='__main__':
