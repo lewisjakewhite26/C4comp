@@ -44,9 +44,9 @@ cd C4comp && git sparse-checkout set <folder>
 
 | Project | State | Waiting on | Repo folder |
 | --- | --- | --- | --- |
-| Capybara blanket scene (Short, then a 2-hour video) | HIGH PRIORITY. Lewis's two reference images saved; next build | Lewis's go-ahead to start | not started |
+| Capybara blanket scene (Short, then a 2-hour video) | HIGH PRIORITY. Lewis's three reference images saved in refs/ideas/; next build | Lewis's go-ahead to start | not started |
 | Classroom timers (spirograph etc.) | Parked: could work, not for now | Lewis picking it back up | not started |
-| Reference ideas Lewis liked: orange cloud timelapse (@adiebee19), cherry-blossom canal walk, ring-escape ball game (@the.viral.potato) | Ideas only | Lewis choosing which to build | not started |
+| Reference ideas Lewis liked: orange cloud timelapse (@adiebee19), cherry-blossom canal walk, ring-escape ball game and "200 balls, one hair apart / butterfly effect" physics Short (@the.viral.potato); clips and notes in refs/ideas/ | Ideas only | Lewis choosing which to build | not started |
 | Dropped: long firefly video (lighting too painful) and long maths-morph video (wouldn't be good) | Dropped | Nothing | n/a |
 | Window wall Short ("someone's cat is up late") | Video approved (v3) | A better rain recording from Lewis, then mix and export | window-wall-short |
 | Nordic meadow long video | Silent 15-min video and 30-min music done | A waterfall recording, then join them | nordic-final, nordic-audio |
