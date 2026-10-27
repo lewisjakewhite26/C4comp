@@ -17,7 +17,10 @@ The `.m4a` files are the original audio pulled out of Gemini's `.mp4` downloads 
 | 09 | Three O'Clock Tea | 2:57 |
 | 10 | Paper Piano | 2:38 |
 | 11 | Transit at Midnight | 2:54 |
+| 12 | Afternoon by the Window | 2:51 |
+| 13 | Ink Dries on the Page | 2:53 |
+| 14 | Midnight Coffee | 2:41 |
 
-Total: 11 tracks, 29:24. Track 11 was downloaded as an MP3, so it is kept as one.
+Total: 14 tracks, 37:49. Tracks 11, 12 and 14 were downloaded from Gemini as MP3s, so they are kept as MP3s.
 
 Track 04 was called "Rain Against the Glass" in Gemini. It was renamed because `music/rainy-pond-lofi/` already has a different track with that name.
