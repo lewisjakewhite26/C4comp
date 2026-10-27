@@ -55,6 +55,9 @@ cd C4comp && git sparse-checkout set <folder>
 | Rain video | Idea | A real rain recording | rain-house-loop |
 | Cosy cat-on-cushion Short (Gemini clip) | Candidate | Lewis's go-ahead; needs a tall reframe and a hook | not started |
 | Storm bedroom (Meta) | Needs regenerating | A new Meta clip without the fade-out and indoor rain | not started |
+| Halloween lodge long video (2–3 h): cabin interior, stone fireplace, river and mountain view, geese, capybara asleep in the corner chair | 72 s seamless 1080p loop done and sent to Lewis (geese cross once per loop); 6 new Lyria tracks so far (about 18 min, 73–85 BPM) | More Lyria tracks (22 prompts written, with first-bar instructions to stop the repeated harp-style intro), a 2 h or 3 h decision, and whether to add a quiet fire sound | not started |
+| Capybara infinite zoom loop (pond → dewdrop → mug → coffee drop → pond) | PAUSED. Flow keyframe plan and prompts written | Lewis making the K2–K4 keyframes in Flow | refs/ideas/capy_zoom_loop.md |
+| Music visualiser videos: Lewis liked the visualiser on Lyria's "The Corner Room" video (a dotted particle diamond on black that pulses and morphs with the music). Idea: simple music-led visualiser videos for the lofi tracks | Idea | Lewis choosing when to build | not started |
 
 ## The spec
 
