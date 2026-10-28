@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capy Pomodoro Timer</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background: #17120e;
+            color: #fff;
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .background {
+            position: fixed;
+            inset: 0;
+            background: url("Gemini_Generated_Image_qd5160qd5160qd51.jpg") center / cover no-repeat;
+            filter: brightness(0.78);
+        }
+
+        .shade {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 8, 10, 0.18);
+        }
+
+        .timer-card {
+            position: fixed;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .timer-card:focus-visible {
+            outline: 2px solid #ffc0ca;
+            outline-offset: 5px;
+        }
+
+        .phase-label {
+            display: none;
+        }
+
+        .timer-container {
+            position: relative;
+            display: grid;
+            width: min(400px, 76vw, 76vh);
+            aspect-ratio: 1;
+            place-items: center;
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            overflow: visible;
+            transform: rotate(-90deg);
+        }
+
+        .timer-ring-track,
+        .timer-ring-progress {
+            fill: none;
+            stroke-width: 5;
+        }
+
+        .timer-ring-track {
+            stroke: rgba(63, 63, 70, 0.6);
+        }
+
+        .timer-ring-progress {
+            stroke: url(#ring-gradient);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.9s linear;
+        }
+
+        .time-display {
+            position: absolute;
+            font-size: clamp(64px, 12vw, 100px);
+            font-weight: 500;
+            letter-spacing: -0.06em;
+            font-variant-numeric: tabular-nums;
+            text-shadow: 0 2px 12px rgba(0, 0, 0, 0.32);
+        }
+
+        .hint {
+            display: none;
+        }
+
+        @media (max-width: 600px) {
+            .timer-container {
+                width: min(340px, 78vw, 78vh);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background" aria-hidden="true"></div>
+    <div class="shade" aria-hidden="true"></div>
+
+    <main
+        class="timer-card"
+        id="timerCard"
+        role="button"
+        tabindex="0"
+        aria-label="Pomodoro timer. Click to pause or resume."
+        title="Click to pause or resume"
+    >
+        <div class="phase-label" id="phaseLabel">FOCUS SESSION</div>
+        <div class="timer-container">
+            <svg viewBox="0 0 360 360" aria-hidden="true">
+                <defs>
+                    <linearGradient id="ring-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ec4899"></stop>
+                        <stop offset="100%" stop-color="#14b8a6"></stop>
+                    </linearGradient>
+                </defs>
+                <circle class="timer-ring-track" cx="180" cy="180" r="160"></circle>
+                <circle class="timer-ring-progress" id="progressRing" cx="180" cy="180" r="160"></circle>
+            </svg>
+            <div class="time-display" id="timeDisplay">25:00</div>
+        </div>
+        <div class="hint" id="hint">Click to pause</div>
+    </main>
+
+    <script>
+        const phases = [
+            { label: "FOCUS SESSION", seconds: 25 * 60 },
+            { label: "SHORT PAUSE", seconds: 3 },
+            { label: "SHORT BREAK", seconds: 5 * 60 },
+            { label: "SESSION COMPLETE", seconds: 1 }
+        ];
+        const circumference = 2 * Math.PI * 160;
+        const progressRing = document.getElementById("progressRing");
+        const timeDisplay = document.getElementById("timeDisplay");
+        const phaseLabel = document.getElementById("phaseLabel");
+        const hint = document.getElementById("hint");
+        const card = document.getElementById("timerCard");
+
+        let phaseIndex = 0;
+        let remainingSeconds = phases[0].seconds;
+        let deadline = 0;
+        let timerId = null;
+        let isRunning = false;
+
+        progressRing.style.strokeDasharray = `${circumference}`;
+        progressRing.style.strokeDashoffset = "0";
+
+        function updateDisplay() {
+            const phase = phases[phaseIndex];
+            const shownSeconds = phaseIndex === phases.length - 1 ? 0 : remainingSeconds;
+            const minutes = Math.floor(shownSeconds / 60);
+            const seconds = shownSeconds % 60;
+
+            timeDisplay.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+            phaseLabel.textContent = phase.label;
+            document.title = `${timeDisplay.textContent} ${phase.label} | Capy Pomodoro`;
+            const progress = phaseIndex === 0
+                ? remainingSeconds / phase.seconds
+                : phaseIndex === 1
+                    ? 1
+                    : phaseIndex === 2
+                        ? remainingSeconds / phase.seconds
+                        : 0;
+            progressRing.style.strokeDashoffset = `${circumference * (1 - progress)}`;
+            hint.textContent = isRunning ? "Click to pause" : phaseIndex === phases.length - 1 ? "Session finished" : "Paused · click to resume";
+        }
+
+        function tick() {
+            const now = Date.now();
+
+            while (now >= deadline && phaseIndex < phases.length - 1) {
+                phaseIndex += 1;
+                deadline += phases[phaseIndex].seconds * 1000;
+            }
+
+            if (now >= deadline) {
+                phaseIndex = phases.length - 1;
+                remainingSeconds = 0;
+                isRunning = false;
+                clearInterval(timerId);
+                timerId = null;
+                updateDisplay();
+                return;
+            }
+
+            remainingSeconds = Math.ceil((deadline - now) / 1000);
+            updateDisplay();
+        }
+
+        function startTimer() {
+            if (isRunning || phaseIndex === phases.length - 1) return;
+            isRunning = true;
+            deadline = Date.now() + remainingSeconds * 1000;
+            timerId = window.setInterval(tick, 100);
+            tick();
+        }
+
+        function pauseTimer() {
+            if (!isRunning) return;
+            remainingSeconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+            isRunning = false;
+            clearInterval(timerId);
+            timerId = null;
+            updateDisplay();
+        }
+
+        function toggleTimer() {
+            if (isRunning) pauseTimer();
+            else startTimer();
+        }
+
+        card.addEventListener("click", toggleTimer);
+        card.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                toggleTimer();
+            }
+        });
+
+        updateDisplay();
+        startTimer();
+    </script>
+</body>
+</html>

@@ -37,6 +37,7 @@ Every Python script used to make the ZonelyTime videos, saved so future videos c
 | `rain2/` | `bed.py` turns a short rain recording into a long, non-repeating bed. | slice length, crossfade |
 | `jelly/`, `jf/` | **Jellyfish timers** (1, 2, 5 and 10 minutes): the scene, particles, timer digits and seamless loop. | timer lengths in `run_timers.sh` |
 | `lava/` | **Lava lamp timers** (2, 3, 5 and 10 minutes, plus a portrait TikTok version) and the ring timer overlay. | blob seeds, colours |
+| `pomodoro/` | **Capy Pomodoro timer.** Renders a centred, transparent pink-to-teal gradient ring and white countdown over the project image, with a 25-minute focus countdown, a 3-second pause and a 5-minute break. | `FOCUS_SECONDS`, `PAUSE_SECONDS`, `BREAK_SECONDS` |
 | `wall/`, `wall2/` | **Window wall Short** (London tower windows, cat and plant, TV glow). | facade tile, pane list |
 | `tt2/`, `pb/` | TikTok edits: text layers, night sound effects, pan-and-crop from a landscape clip. | — |
 | `alp/`, `aur/`, `cafe/`, `harbour/`, `harb2/`, `hut/`, `block/`, `bus/`, `rain/`, `train/` | **Scene loops for long YouTube videos:** Alpine cycle, aurora, autumn café day-night cycle, harbour and boat, snowy hut blizzard, tower block windows, bus window, rain house, train bridge. | — |
