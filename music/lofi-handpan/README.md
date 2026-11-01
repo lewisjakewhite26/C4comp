@@ -5,6 +5,6 @@ Two lofi hand pan tracks (about 3 minutes each), converted to 320 kbps MP3 from 
 | Title | Style | File |
 |---|---|---|
 | Slow Bloom in the Sun | Lofi hand pan | Slow Bloom in the Sun.mp3 |
-| Rain Against the Glass (hand pan) | Lofi hand pan | Rain Against the Glass (hand pan).mp3 |
+| Rain on the Windowpane | Lofi hand pan | Rain on the Windowpane.mp3 |
 
-Note: this "Rain Against the Glass" is a different track from `music/rainy-pond-lofi/23 - Rain Against the Glass.mp3`.
+Note: not the same track as `music/rainy-pond-lofi/23 - Rain Against the Glass.mp3` (originally generated under a similar name).
