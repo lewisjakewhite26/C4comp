@@ -116,7 +116,7 @@ emask=np.where(edge,0.55,1.0)[...,None]
 def frame(f):
     age=(f-fo).astype(np.float32); st=np.where((fo<=f)[:,None],grid,np.array(DIM,np.uint8)).astype(np.float32)
     fl=np.clip(1-age/14,0,1)*(fo<=f)*0.9; st=st*(1-fl[:,None])+np.array(GOLD,np.float32)*fl[:,None]
-    st=np.where(isbg[:,None],np.where((fo<=f)[:,None],np.array(DIM,np.float32)*0.8+fl[:,None]*np.array((90,70,30),np.float32),np.array(DIM,np.float32)),st)
+    st=np.where(isbg[:,None],np.array(DIM,np.float32),st)
     big=st[idmap]*emask
     canvas=BG.astype(np.float32)+glowm
     reg=canvas[GY0:GY0+GH,GX0:GX0+GW]; canvas[GY0:GY0+GH,GX0:GX0+GW]=reg*(1-mask)+big*mask
