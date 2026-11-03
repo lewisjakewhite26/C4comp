@@ -25,67 +25,89 @@ bgi=int(np.argmax(pal.sum(1)-pal.std(1)*2)); pal[bgi]=(38,38,44)
 isbg=lab==bgi; grid=pal[lab].astype(np.uint8)
 UNP=np.array((38,38,44),np.uint8); BGC=(18,18,22)
 rng=np.random.default_rng(SEED)
-BR=float(E('BALL',9)); TOUCH=BR+R*0.9
-G=float(E('GRAV',2600)); REST=float(E('REST',0.80)); WREST=0.9; FRIC=0.985   # px/s^2, bounce restitution, wall restitution, floor grip per bounce
-# --- real bouncing: each ball is released with a start position/velocity (chosen to cross unpainted hexes), then pure physics:
-#     constant gravity, energy-losing bounces off floor and side walls, rolls to rest. No steering, no time-warp.
+MODE=E('MODE','bounce')   # bounce = gravity hoppers | bubble = rising, wobbling bubbles | pool = friction + elastic collisions
+BR=float(E('BALL',{'bounce':9,'bubble':11,'pool':11}[MODE])); TOUCH=BR+R*0.9; M=BR+6   # M: balls never get nearer than this to the panel edge
+G=float(E('GRAV',2600)); REST=float(E('REST',0.80)); WREST=0.9; FRIC=0.985
+BUOY=float(E('BUOY',300)); KD=float(E('KD',1.0)); POOLFR=float(E('POOLFR',380)); PWREST=0.93
 SDT=1/480; painted=np.zeros(N,bool); ptime=np.full(N,-1.0); bounces=[]; balls=[]
-animal=np.where(~isbg)[0]; tot_animal=len(animal); isun0=~isbg
-def step(p,v,dt):
-    v=v+np.array([0,G])*dt; p=p+v*dt; hit=None; spd=0
-    if p[0]<BR: p[0]=BR; spd=abs(v[0]); v[0]=abs(v[0])*WREST; hit=0
-    elif p[0]>GW-BR: p[0]=GW-BR; spd=abs(v[0]); v[0]=-abs(v[0])*WREST; hit=0
-    if p[1]>GH-BR:
-        p[1]=GH-BR; spd=abs(v[1]); v[1]=-v[1]*REST; v[0]*=FRIC; hit=1
-        if abs(v[1])<90: v[1]=0
-    return p,v,hit,spd
-def plan(painted_now):
-    isun=~painted_now&isunan; best=None
-    for _ in range(int(E('CAND',70))):
-        p=np.array([rng.uniform(BR,GW-BR),rng.uniform(BR,GH*0.55)]); v=np.array([rng.choice([-1,1])*rng.uniform(120,760),rng.uniform(-900,200)])
-        seen=set(); dt=1/120
-        for k in range(int(9/dt)):
-            p,v,h,_=step(p,v,dt)
-            if k%2==0:
-                for i in tree.query_ball_point(p,TOUCH):
-                    if isun[i]: seen.add(i)
-            if p[1]>GH-BR-1 and abs(v[1])<1 and abs(v[0])<20: break
-        if best is None or len(seen)>best[0]: best=(len(seen),p.copy(),v.copy())
-    return best
-isunan=np.zeros(N,bool); isunan[animal]=True
-t=0.0; active=[]; last_launch=-99; CAD=float(E('CAD',3.0)); stop=False
+animal=np.where(~isbg)[0]; tot_animal=len(animal); isunan=np.zeros(N,bool); isunan[animal]=True
+U=lambda a_,b_: rng.uniform(a_,b_)
+def new_ball():
+    if MODE=='bounce':
+        return {'p':np.array([U(M,GW-M),U(M,GH*0.5)]),'v':np.array([rng.choice([-1,1])*U(120,760),U(-900,200)])}
+    if MODE=='bubble':
+        return {'p':np.array([U(M,GW-M),GH-M]),'v':np.array([0.,-30.]),'A':U(500,1100),'om':U(2.5,5.0),'ph':U(0,6.28)}
+    e=rng.integers(4); q=U(M,GW-M if e<2 else GH-M)   # pool: shot in from a random edge toward a random point
+    p=[np.array([q,M]),np.array([q,GH-M]),np.array([M,U(M,GH-M)]),np.array([GW-M,U(M,GH-M)])][e]
+    tgt=np.array([U(GW*.2,GW*.8),U(GH*.2,GH*.8)]); dv=tgt-p; dv/=np.hypot(*dv)
+    return {'p':p.astype(float),'v':dv*U(float(E('PV0',550)),float(E('PV1',1150)))}
+def step(b,dt,t):
+    """advance one ball; returns (hit_axis or None, impact speed, finished?)"""
+    p,v=b['p'],b['v']; hit=None; spd=0; fin=False
+    if MODE=='bounce':
+        v[1]+=G*dt
+    elif MODE=='bubble':
+        v[0]+=(b['A']*np.cos(b['om']*t+b['ph'])-KD*v[0])*dt; v[1]+=(-BUOY-KD*v[1])*dt
+    else:
+        sp=np.hypot(*v)
+        if sp>1e-6: v*=max(0,sp-POOLFR*dt)/sp
+        v*=(1-0.25*dt)
+    p+=v*dt
+    wr={'bounce':WREST,'bubble':0.5,'pool':PWREST}[MODE]
+    if p[0]<M: p[0]=M; spd=abs(v[0]); v[0]=abs(v[0])*wr; hit=0
+    elif p[0]>GW-M: p[0]=GW-M; spd=abs(v[0]); v[0]=-abs(v[0])*wr; hit=0
+    if p[1]>GH-M:
+        p[1]=GH-M; spd=abs(v[1]); hit=1
+        v[1]=-v[1]*(REST if MODE=='bounce' else wr)
+        if MODE=='bounce':
+            v[0]*=FRIC
+            if abs(v[1])<90: v[1]=0
+            if abs(v[1])<1 and abs(v[0])<14: fin=True
+            elif abs(v[1])<1: v[0]*=1-1.6*dt
+    elif p[1]<M:
+        if MODE=='bubble': fin=True
+        else: p[1]=M; spd=abs(v[1]); v[1]=abs(v[1])*(REST if MODE=='bounce' else wr); hit=1
+    if MODE=='pool' and np.hypot(*v)<12: fin=True
+    return hit,spd,fin
 def launch(t):
-    global rng
-    p0=np.array([rng.uniform(GW*0.15,GW*0.85),BR+4]) if not balls else None
-    # re-run candidate search but keep the *start state*: recompute by regenerating with the same rng draw
-    st=None; bestn=-1; isun=~painted&isunan
-    for _ in range(max(1,int(float(E('C0',1))+float(E('C1',40))*min(1,t/float(E('TREF',70)))**float(E('CP',2))))):
-        p=np.array([rng.uniform(BR,GW-BR),rng.uniform(BR,GH*0.5)]); v=np.array([rng.choice([-1,1])*rng.uniform(120,760),rng.uniform(-900,200)])
-        p1,v1=p.copy(),v.copy(); seen=set(); dt=1/120
+    isun=~painted&isunan; best=None; bestn=-1
+    nc=max(1,int(float(E('C0',1))+float(E('C1',40))*min(1,t/float(E('TREF',70)))**float(E('CP',2))))
+    for _ in range(nc):
+        b=new_ball(); c={k:(x.copy() if hasattr(x,'copy') else x) for k,x in b.items()}; seen=set(); dt=1/240 if MODE=='pool' else 1/120
         for k in range(int(9/dt)):
-            p1,v1,h,_=step(p1,v1,dt)
+            h,s_,fin=step(c,dt,t+k*dt)
             if k%2==0:
-                for i in tree.query_ball_point(p1,TOUCH):
+                for i in tree.query_ball_point(c['p'],TOUCH):
                     if isun[i]: seen.add(i)
-            if p1[1]>GH-BR-1 and abs(v1[1])<1 and abs(v1[0])<20: break
-        if len(seen)>bestn: bestn=len(seen); st=(p,v)
-    b={'t0':t,'p':st[0].copy(),'v':st[1].copy(),'pos':[],'vel':[],'rest':None}; return b
+            if fin: break
+        if len(seen)>bestn: bestn=len(seen); best=b
+    best.update({'t0':t,'pos':[],'vel':[],'t1':None,'ended':False}); return best
+t=0.0; active=[]; last_launch=-99; TAILF=float(E('TAIL',0.04))
+CAD0=float(E('CAD0',6)); CAD1=float(E('CAD1',0.25)); TREFC=float(E('TREF',70))
 while t<float(E('MAXT',120)):
-    if (t-last_launch>=float(E('CAD0',6))*(float(E('CAD1',0.25))/float(E('CAD0',6)))**min(1,t/float(E('TREF',70))) or not active) and (painted&isunan).sum()<(1-float(E('TAIL',0.04)))*tot_animal:
+    if (t-last_launch>=CAD0*(CAD1/CAD0)**min(1,t/TREFC) or not active) and (painted&isunan).sum()<(1-TAILF)*tot_animal and len(active)<int(E('MAXACT',14)):
         b=launch(t); active.append(b); balls.append(b); last_launch=t
     for b in list(active):
-        b['p'],b['v'],h,spd=step(b['p'],b['v'],SDT)
-        b['pos'].append(b['p'].copy()); b['vel'].append(b['v'].copy())
+        h,spd,fin=step(b,SDT,t); b['pos'].append(b['p'].copy()); b['vel'].append(b['v'].copy())
         if h is not None and spd>150: bounces.append((t,h,b['p'][0]/GW,min(1,spd/2200)))
-        if b['p'][1]>=GH-BR-0.5 and abs(b['v'][1])<1: b['v'][0]*=1-1.6*SDT   # rolling drag
         for i in tree.query_ball_point(b['p'],TOUCH):
             if not painted[i]: painted[i]=True; ptime[i]=t
-        if b['p'][1]>=GH-BR-0.5 and abs(b['v'][1])<1 and abs(b['v'][0])<14:
-            b['t1']=t; active.remove(b)
+        if fin:
+            b['t1']=t; active=[x for x in active if x is not b]
+            if MODE=='bubble': bounces.append((t,1,b['p'][0]/GW,0.35))
+    if MODE=='pool' and len(active)>1:   # elastic ball-ball collisions (equal masses)
+        for i in range(len(active)):
+            for j in range(i+1,len(active)):
+                A_,B_=active[i],active[j]; dxy=B_['p']-A_['p']; dd=np.hypot(*dxy)
+                if 1e-6<dd<2*BR:
+                    n=dxy/dd; rel=(A_['v']-B_['v'])@n
+                    if rel>0:
+                        A_['v']-=rel*n*0.97; B_['v']+=rel*n*0.97; ov=(2*BR-dd)/2; A_['p']-=n*ov; B_['p']+=n*ov
+                        bounces.append((t,0,A_['p'][0]/GW,min(1,rel/1500)))
     t+=SDT
-    if not active and (painted&isunan).sum()>=(1-float(E('TAIL',0.04)))*tot_animal: break
+    if not active and (painted&isunan).sum()>=(1-TAILF)*tot_animal: break
 for b in active: b['t1']=t
-T_end=t; print('balls',len(balls),'sim end',round(T_end,1),'s; bounces',len(bounces),flush=True)
+T_end=t; print('mode',MODE,'balls',len(balls),'sim end',round(T_end,1),'s; bounces',len(bounces),flush=True)
 NF=int(max(float(E('SEC',0)) or 0,T_end)*FPS); extra=int(2.0*FPS)
 left=np.where(~painted)[0]; rng.shuffle(left)
 fo=np.full(N,10**9)
@@ -93,9 +115,7 @@ for i in range(N):
     if painted[i]: fo[i]=int(ptime[i]*FPS)
 for k,i in enumerate(left): fo[i]=NF+int(k*extra/max(1,len(left)))
 TOT=NF+extra+int(float(E('HOLD',3.4))*FPS)
-bounces=[(tb,ax,x,v) for tb,ax,x,v in bounces]
 cov=lambda q:((fo<=int(NF*q))&~isbg).sum()/tot_animal
-print('coverage at 25/50/75% time:',[round(cov(q),2) for q in (.25,.5,.75)],flush=True)
 F=lambda s,w='Bold': ImageFont.truetype('/usr/share/fonts/truetype/google-fonts/Poppins-%s.ttf'%w,s)
 def text_c(d,xy,t_,font,fill):
     w=d.textlength(t_,font=font); d.text((xy[0]-w/2,xy[1]),t_,font=font,fill=fill)
@@ -108,7 +128,7 @@ cx_,cy_=W/2,GY0+GH/2; gy,gx=np.mgrid[0:H,0:W]; bgimg+=np.exp(-(((gx-cx_)/700)**2
 for _ in range(110):
     x_,y_=int(rng.integers(0,W)),int(rng.integers(0,int(H*0.55))); br=rng.uniform(.25,.8); cv2.circle(bgimg,(x_,y_),int(rng.integers(1,3)),tuple(float(c)*br for c in (255,240,210)),-1,cv2.LINE_AA)
 BG=np.clip(bgimg,0,255).astype(np.uint8)
-RAD=44; m=np.zeros((GH,GW),np.uint8); cv2.rectangle(m,(RAD,0),(GW-RAD,GH),255,-1); cv2.rectangle(m,(0,RAD),(GW,GH-RAD),255,-1)
+RAD=int(E('RAD',26)); m=np.zeros((GH,GW),np.uint8); cv2.rectangle(m,(RAD,0),(GW-RAD,GH),255,-1); cv2.rectangle(m,(0,RAD),(GW,GH-RAD),255,-1)
 for cx2,cy2 in ((RAD,RAD),(GW-RAD,RAD),(RAD,GH-RAD),(GW-RAD,GH-RAD)): cv2.circle(m,(cx2,cy2),RAD,255,-1,cv2.LINE_AA)
 mask=(cv2.GaussianBlur(m,(0,0),1.2)/255.0)[...,None]
 glowm=np.zeros((H,W),np.float32); glowm[GY0:GY0+GH,GX0:GX0+GW]=m/255.0; glowm=cv2.GaussianBlur(glowm,(0,0),26)[...,None]*np.array((255,190,110))*0.35
@@ -120,18 +140,22 @@ def frame(f):
     big=st[idmap]*emask
     canvas=BG.astype(np.float32)+glowm
     reg=canvas[GY0:GY0+GH,GX0:GX0+GW]; canvas[GY0:GY0+GH,GX0:GX0+GW]=reg*(1-mask)+big*mask
-    tt=f/FPS
-    for bl in balls:
-        if tt<bl['t0'] or tt>bl['t1']+0.6: continue
-        k=min(len(bl['pos'])-1,int((tt-bl['t0'])/SDT)); bx,by=bl['pos'][k]; vx,vy=bl['vel'][k]; fade=1.0 if tt<=bl['t1'] else max(0,1-(tt-bl['t1'])/0.6)
-        px,py=int(GX0+bx),int(GY0+by); r0=int(BR*5); y0,y1,x0,x1=max(0,py-r0),min(H,py+r0),max(0,px-r0),min(W,px+r0)
-        lay=np.zeros((y1-y0,x1-x0,3),np.float32); cv2.circle(lay,(px-x0,py-y0),int(BR*1.8),TINTS[balls.index(bl)%4],-1,cv2.LINE_AA); lay=cv2.GaussianBlur(lay,(0,0),BR*1.3)*1.5*fade
-        canvas[y0:y1,x0:x1]+=lay
+    tt=f/FPS; bl=np.zeros((GH,GW,3),np.float32)   # balls are drawn on their own layer, clipped to the panel
+    for bi,bo in enumerate(balls):
+        if tt<bo['t0'] or tt>bo['t1']+0.6: continue
+        k=min(len(bo['pos'])-1,int((tt-bo['t0'])/SDT)); bx,by=bo['pos'][k]; vx,vy=bo['vel'][k]
+        gone=tt>bo['t1']; fade=1.0 if not gone else max(0,1-(tt-bo['t1'])/0.6)
+        px,py=int(bx),int(by); r0=int(BR*5); y0,y1,x0,x1=max(0,py-r0),min(GH,py+r0),max(0,px-r0),min(GW,px+r0)
+        lay=np.zeros((y1-y0,x1-x0,3),np.float32); cv2.circle(lay,(px-x0,py-y0),int(BR*1.8),TINTS[bi%4],-1,cv2.LINE_AA); lay=cv2.GaussianBlur(lay,(0,0),BR*1.3)*1.5*fade
+        bl[y0:y1,x0:x1]+=lay
+        if MODE=='bubble' and gone:   # pop: an expanding ring
+            kk=(tt-bo['t1'])/0.6; cv2.circle(bl,(px,py),int(BR*(1+2.2*kk)),tuple(c_*fade*0.9 for c_ in (255,244,214)),2,cv2.LINE_AA); continue
         sp=min(1,np.hypot(vx,vy)/2500); ang=np.degrees(np.arctan2(vy,vx)); ax_=(int(BR*(1+0.45*sp)),int(BR*(1-0.2*sp)))
-        near=(by>GH-BR-2.5 and abs(vy)<600)  # squashed while in contact with the floor
-        if near: ax_=(int(BR*1.25),int(BR*0.78)); ang=0
+        if MODE=='bounce' and by>GH-M-2.5 and abs(vy)<600: ax_=(int(BR*1.25),int(BR*0.78)); ang=0
+        if MODE!='bounce': ax_=(int(BR*(1+0.15*sp)),int(BR*(1-0.05*sp)))
         for col,sc in (((255,244,214),1.0),((255,255,255),0.55)):
-            cv2.ellipse(canvas,(px,py),(max(2,int(ax_[0]*sc)),max(2,int(ax_[1]*sc))),ang,0,360,tuple(c*fade for c in col),-1,cv2.LINE_AA)
+            cv2.ellipse(bl,(px,py),(max(2,int(ax_[0]*sc)),max(2,int(ax_[1]*sc))),ang,0,360,tuple(c_*fade for c_ in col),-1,cv2.LINE_AA)
+    canvas[GY0:GY0+GH,GX0:GX0+GW]+=bl*mask
     p=Image.fromarray(np.clip(canvas,0,255).astype(np.uint8)); d=ImageDraw.Draw(p)
     pct=int(100*((fo<=f)&~isbg).sum()/tot_animal); done=f>=NF+extra
     text_c(d,(W//2,120),TITLE,F(60,'Light'),CREAM); text_c(d,(W//2,212),'guess in the comments',F(34,'Light'),(200,184,170))
