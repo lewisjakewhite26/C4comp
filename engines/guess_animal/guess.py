@@ -1,6 +1,6 @@
 """Guess-the-animal Short: a ball bounces round a pixel grid and paints the animal in.
 Usage: python3 guess.py art.jpg NAME out.mp4 [still SEC,SEC]
-Env: COLS ROWS (grid), K (palette size), CROP x0,y0,x1,y1 (of the art), SEC (length), SEED, MUSIC, BG (art background rgb)
+Env: HEXR (hex radius px), GW GH GY0 (grid area), K, CROP x0,y0,x1,y1, SEC, SEED, SPD, B0 B1 BP (brush), GAP, MUSIC, MSTART
 """
 import os,sys,subprocess,numpy as np,cv2
 from PIL import Image,ImageDraw,ImageFont
@@ -8,60 +8,56 @@ from sklearn.cluster import KMeans
 art,NAME,OUT=sys.argv[1],sys.argv[2],sys.argv[3]
 STILL=[float(x) for x in sys.argv[5].split(',')] if len(sys.argv)>5 and sys.argv[4]=='still' else None
 E=os.environ.get; COLS=int(E('COLS',44)); ROWS=int(E('ROWS',56)); K=int(E('K',10)); SEC=float(E('SEC',52)); SEED=int(E('SEED',3))
-W,H,FPS=1080,1920,24; CELL=int(E('CELL',22)); GW,GH=COLS*CELL,ROWS*CELL; GX0=(W-GW)//2; GY0=int(E('GY0',520))
+W,H,FPS=1080,1920,24; R=float(E('HEXR',6.5)); GW=int(E('GW',960)); GH=int(E('GH',1080)); GX0=(W-GW)//2; GY0=int(E('GY0',560)); CELL=R*2.2
+from scipy.spatial import cKDTree
+hw=np.sqrt(3)*R; hh=1.5*R; ncol=int(GW/hw)+2; nrow=int(GH/hh)+2
+cs=np.array([((c+0.5*(r%2))*hw+hw*0.25, r*hh+R*0.6) for r in range(nrow) for c in range(ncol)]); cs=cs[(cs[:,0]<GW-hw*0.2)&(cs[:,1]<GH-R*0.2)]
+tree=cKDTree(cs); N=len(cs)
+yy,xx=np.mgrid[0:GH,0:GW]; d,ix=tree.query(np.c_[xx.ravel(),yy.ravel()],k=2); idmap=ix[:,0].reshape(GH,GW); edge=((d[:,1]-d[:,0])<float(E('GAP',1.3))).reshape(GH,GW)
 im=Image.open(art).convert('RGB')
 if E('CROP'): im=im.crop(tuple(int(v) for v in E('CROP').split(',')))
 from PIL import ImageFilter
-im=im.filter(ImageFilter.UnsharpMask(radius=3,percent=160,threshold=2))
-small=np.array(im.resize((COLS,ROWS),Image.LANCZOS)).reshape(-1,3).astype(np.float32)
+im=im.filter(ImageFilter.UnsharpMask(radius=3,percent=160,threshold=2)).resize((GW,GH),Image.LANCZOS)
+blur=cv2.GaussianBlur(np.array(im),(0,0),R*0.55)
+small=blur[np.clip(cs[:,1].astype(int),0,GH-1),np.clip(cs[:,0].astype(int),0,GW-1)].astype(np.float32)
 km=KMeans(K,n_init=4,random_state=1).fit(small); pal=km.cluster_centers_; lab=km.labels_
-# brightest/least-saturated cluster is the paper background: make it a warm cream
 bgi=int(np.argmax(pal.sum(1)-pal.std(1)*2)); pal[bgi]=(38,38,44)
-isbg=(lab==bgi).reshape(ROWS,COLS)
-grid=pal[lab].reshape(ROWS,COLS,3).astype(np.uint8)
+isbg=lab==bgi; grid=pal[lab].astype(np.uint8)
 UNP=np.array((38,38,44),np.uint8); BGC=(18,18,22)
 rng=np.random.default_rng(SEED)
-# ball path: billiard in the grid, irrational-ish slope, brush grows over time
-NF=int(SEC*FPS); SUB=6; pos=np.array([GW*0.31,GH*0.18]); ang=0.9; spd=float(E('SPD',1500))  # px/s
-vel=np.array([np.cos(ang),np.sin(ang)])*spd; bounces=[]; painted=np.zeros((ROWS,COLS),bool); order=[]
-B0,B1=float(E('B0',1.0)),float(E('B1',1.8)); brush=lambda t: B0+B1*(t/SEC)**float(E('BP',1.5))
-cov=[]; trail=[]; ballpath=[]
+NF=int(SEC*FPS); SUB=6; pos=np.array([GW*0.31,GH*0.18]); ang=0.9; spd=float(E('SPD',720))
+vel=np.array([np.cos(ang),np.sin(ang)])*spd; bounces=[]; painted=np.zeros(N,bool); order=[]
+B0,B1=float(E('B0',1.0)),float(E('B1',2.5)); brush=lambda t: (B0+B1*(t/SEC)**float(E('BP',1.5)))*CELL
+cov=[]; ballpath=[]
 for f in range(NF):
-    for s in range(SUB):
+    for s_ in range(SUB):
         dt=1/FPS/SUB; pos=pos+vel*dt
         for ax,lim in ((0,GW),(1,GH)):
-            if pos[ax]<8: pos[ax]=8; vel[ax]=abs(vel[ax]); bounces.append(((f+s/SUB)/FPS,ax))
-            if pos[ax]>lim-8: pos[ax]=lim-8; vel[ax]=-abs(vel[ax]); bounces.append(((f+s/SUB)/FPS,ax))
-        r=brush(f/FPS); cx,cy=pos[0]/CELL,pos[1]/CELL
-        y0,y1,x0,x1=max(0,int(cy-r)),min(ROWS,int(cy+r)+1),max(0,int(cx-r)),min(COLS,int(cx+r)+1)
-        for yy in range(y0,y1):
-            for xx in range(x0,x1):
-                if (xx+.5-cx)**2+(yy+.5-cy)**2<=r*r and not painted[yy,xx]: painted[yy,xx]=True; order.append((f,yy,xx))
+            if pos[ax]<8: pos[ax]=8; vel[ax]=abs(vel[ax]); bounces.append(((f+s_/SUB)/FPS,ax))
+            if pos[ax]>lim-8: pos[ax]=lim-8; vel[ax]=-abs(vel[ax]); bounces.append(((f+s_/SUB)/FPS,ax))
+        for i in tree.query_ball_point(pos,brush(f/FPS)):
+            if not painted[i]: painted[i]=True; order.append((f,i))
     ballpath.append(pos.copy()); cov.append((painted&~isbg).sum()/(~isbg).sum())
-# sweep any leftovers in the last 2 s so it always finishes at 100%
-left=[(yy,xx) for yy in range(ROWS) for xx in range(COLS) if not painted[yy,xx]]
-rng.shuffle(left); n0=NF; extra=int(1.8*FPS)
-for i,(yy,xx) in enumerate(left): order.append((n0+int(i*extra/max(1,len(left))),yy,xx))
+left=[i for i in range(N) if not painted[i]]; rng.shuffle(left); extra=int(1.8*FPS)
+for k,i in enumerate(left): order.append((NF+int(k*extra/max(1,len(left))),i))
 TOT=NF+extra+int(float(E('HOLD',3.2))*FPS)
-fo=np.full((ROWS,COLS),10**9); 
-for f,yy,xx in order: fo[yy,xx]=f
-print('coverage at 25/50/75% time:',[round(cov[int(NF*q)-1],2) for q in (.25,.5,.75)],'leftover',len(left),flush=True)
+fo=np.full(N,10**9)
+for f,i in order: fo[i]=f
+print('cells',N,'coverage at 25/50/75% time:',[round(cov[int(NF*q)-1],2) for q in (.25,.5,.75)],'leftover',len(left),flush=True)
 F=lambda s,b=True: ImageFont.truetype('/usr/share/fonts/truetype/google-fonts/Poppins-%s.ttf'%('Bold' if b else 'Regular'),s)
 def text_c(d,xy,t,font,fill):
     w=d.textlength(t,font=font); d.text((xy[0]-w/2,xy[1]),t,font=font,fill=fill)
-TITLE=E('TITLE','Guess the Animal Before It’s Revealed!')
+TITLE=E('TITLE','Guess the Animal Before It\u2019s Revealed!')
+emask=(~edge)[...,None]
 def frame(f):
-    gridimg=np.where((fo<=f)[...,None],grid,UNP)
-    canvas=np.zeros((H,W,3),np.uint8); canvas[:]=BGC
-    big=np.kron(gridimg,np.ones((CELL,CELL,1),np.uint8))
-    # soft cell gaps
-    big[::CELL,:]=big[::CELL,:]//2; big[:,::CELL]=big[:,::CELL]//2
-    canvas[GY0:GY0+GH,GX0:GX0+GW]=big
+    st=np.where((fo<=f)[:,None],grid,UNP)
+    big=(st[idmap]*np.where(emask,1.0,0.45)).astype(np.uint8)
+    canvas=np.zeros((H,W,3),np.uint8); canvas[:]=BGC; canvas[GY0:GY0+GH,GX0:GX0+GW]=big
     if f<NF:
         bx,by=ballpath[f]; cv2.circle(canvas,(int(GX0+bx),int(GY0+by)),11,(255,255,255),-1,cv2.LINE_AA)
     cv2.rectangle(canvas,(GX0-3,GY0-3),(GX0+GW+2,GY0+GH+2),(150,150,160),2)
     p=Image.fromarray(canvas); d=ImageDraw.Draw(p)
-    pct=int(100*((fo<=f)&~isbg).sum()/(~isbg).sum()); 
+    pct=int(100*((fo<=f)&~isbg).sum()/(~isbg).sum())
     text_c(d,(W//2,200),TITLE,F(50),(255,255,255)); text_c(d,(W//2,285),'comment your guess before the end',F(32,False),(190,190,200))
     done=f>=NF+extra
     text_c(d,(W//2,GY0+GH+34),f'{100 if done else min(pct,99)}%',F(46),(255,255,255))
@@ -74,7 +70,7 @@ def frame(f):
     return np.array(p)
 if STILL:
     for s in STILL: Image.fromarray(frame(int(s*FPS))).save(OUT.replace('.mp4',f'_{s}.png'))
-    Image.fromarray(grid).resize((COLS*8,ROWS*8),Image.NEAREST).save(OUT.replace('.mp4','_grid.png')); sys.exit()
+    sys.exit()
 # audio: pentatonic plinks on bounces over a quiet cleared track
 SR=44100; dur=TOT/FPS; aud=np.zeros(int(dur*SR)+SR,np.float32)
 pent=[0,2,4,7,9,12,14,16]; base=392.0
