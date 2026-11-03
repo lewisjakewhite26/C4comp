@@ -8,7 +8,7 @@ from sklearn.cluster import KMeans
 art,NAME,OUT=sys.argv[1],sys.argv[2],sys.argv[3]
 STILL=[float(x) for x in sys.argv[5].split(',')] if len(sys.argv)>5 and sys.argv[4]=='still' else None
 E=os.environ.get; COLS=int(E('COLS',44)); ROWS=int(E('ROWS',56)); K=int(E('K',10)); SEC=float(E('SEC',52)); SEED=int(E('SEED',3))
-W,H,FPS=1080,1920,24; R=float(E('HEXR',6.5)); GW=int(E('GW',960)); GH=int(E('GH',1080)); GX0=(W-GW)//2; GY0=int(E('GY0',560)); CELL=R*2.2
+W,H,FPS=1080,1920,24; R=float(E('HEXR',6.5)); GW=int(E('GW',960)); GH=int(E('GH',1080)); GX0=(W-GW)//2; GY0=int(E('GY0',380)); CELL=R*2.2
 from scipy.spatial import cKDTree
 hw=np.sqrt(3)*R; hh=1.5*R; ncol=int(GW/hw)+2; nrow=int(GH/hh)+2
 cs=np.array([((c+0.5*(r%2))*hw+hw*0.25, r*hh+R*0.6) for r in range(nrow) for c in range(ncol)]); cs=cs[(cs[:,0]<GW-hw*0.2)&(cs[:,1]<GH-R*0.2)]
@@ -92,7 +92,7 @@ def frame(f):
         canvas[y0:y1,x0:x1]+=lay; cv2.circle(canvas,(px,py),int(BR),(255,244,214),-1,cv2.LINE_AA); cv2.circle(canvas,(px,py),int(BR*0.55),(255,255,255),-1,cv2.LINE_AA)
     p=Image.fromarray(np.clip(canvas,0,255).astype(np.uint8)); d=ImageDraw.Draw(p)
     pct=int(100*((fo<=f)&~isbg).sum()/tot_animal); done=f>=NF+extra
-    text_c(d,(W//2,170),TITLE,F(60,'Light'),CREAM); text_c(d,(W//2,262),'guess in the comments',F(34,'Light'),(200,184,170))
+    text_c(d,(W//2,120),TITLE,F(60,'Light'),CREAM); text_c(d,(W//2,212),'guess in the comments',F(34,'Light'),(200,184,170))
     shown=100 if done else min(pct,99)
     text_c(d,(W//2,GY0+GH+26),f'{shown}%',F(52,'Bold'),GOLD)
     bw=560; bx0=(W-bw)//2; by0=GY0+GH+108; d.rounded_rectangle((bx0,by0,bx0+bw,by0+10),5,fill=(60,52,84)); 
@@ -100,10 +100,10 @@ def frame(f):
     if not done: text_c(d,(W//2,GY0+GH+140),'can you name it before halfway?' if pct<50 else 'still guessing?',F(32,'Light'),(214,198,180))
     else:
         k=min(1,(f-(NF+extra))/12); sz=int(80+10*np.sin(k*np.pi)); t2=f"it\u2019s {ART} {NAME.lower()}"
-        gl=Image.new('RGB',p.size,(0,0,0)); ImageDraw.Draw(gl).text((W//2-d.textlength(t2,font=F(sz))/2,GY0+GH+124),t2,font=F(sz),fill=(255,170,60)); gl=gl.filter(ImageFilter.GaussianBlur(14))
+        gl=Image.new('RGB',p.size,(0,0,0)); ImageDraw.Draw(gl).text((W//2-d.textlength(t2,font=F(sz))/2,GY0+GH+138),t2,font=F(sz),fill=(255,170,60)); gl=gl.filter(ImageFilter.GaussianBlur(14))
         p=Image.fromarray(np.clip(np.array(p).astype(np.int16)+(np.array(gl)*0.6*k).astype(np.int16),0,255).astype(np.uint8)); d=ImageDraw.Draw(p)
-        text_c(d,(W//2,GY0+GH+124),t2,F(sz),(255,236,190))
-    text_c(d,(W//2,1832),'z o n e l y t i m e',F(30,'Light'),(150,134,150))
+        text_c(d,(W//2,GY0+GH+138),t2,F(sz),(255,236,190))
+    text_c(d,(W//2,GY0+GH+275),'z o n e l y t i m e',F(28,'Light'),(150,134,150))
     return np.array(p)
 if STILL:
     for s_ in STILL: Image.fromarray(frame(int(s_*FPS))).save(OUT.replace('.mp4',f'_{s_}.png'))
